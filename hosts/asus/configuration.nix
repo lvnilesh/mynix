@@ -1,4 +1,4 @@
-{
+{pkgs, ...}: {
   imports = [
     ./partials/audio.nix
     ./partials/bootloader.nix
@@ -13,8 +13,7 @@
 
   services.printing.enable = true;
 
-  programs.firefox.enable = true;
-
+  # System user definition (group membership here)
   users.users.cloudgenius = {
     isNormalUser = true;
     description = "Nilesh";

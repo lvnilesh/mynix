@@ -5,7 +5,6 @@
 }: {
   home.username = "cloudgenius";
   home.homeDirectory = "/home/cloudgenius";
-
   home.stateVersion = "25.05";
   # home.stateVersion = "25.11";
 
@@ -22,7 +21,6 @@
     google-chrome
   ];
 
-  # Example: enable some Home Manager modules
   programs.git.enable = true;
   programs.zsh.enable = true;
 }

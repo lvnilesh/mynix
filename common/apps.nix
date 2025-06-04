@@ -10,5 +10,6 @@
     wget
     tree
     alejandra
+    firefox
   ];
 }

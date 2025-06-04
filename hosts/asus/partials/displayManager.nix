@@ -17,9 +17,12 @@
     gnome-calendar
     gnome-music
     gnome-tour
-    weather
+    gnome-weather
+    gnome-clocks
+    gnome-maps
     simple-scan
     totem
     gnome-characters
+    gnome-sound-recorder
   ];
 }

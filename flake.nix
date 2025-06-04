@@ -30,7 +30,7 @@
           specialArgs = {inherit inputs;};
           modules = [
             ./hosts/asus/configuration.nix
-            ./modules/apps.nix
+            ./common/apps.nix
             home-manager.nixosModules.home-manager
             {
               home-manager.useGlobalPkgs = true;
