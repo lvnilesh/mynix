@@ -6,6 +6,7 @@
     ./partials/displayManager.nix
     ./partials/hardware-configuration.nix
     ./partials/network.nix
+    ./partials/nvidia.nix
     ./partials/openssh.nix
     ./partials/storage.nix
     ./partials/tz.nix
