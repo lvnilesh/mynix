@@ -9,6 +9,8 @@
     ./asus/network.nix
     ./asus/storage.nix
 
+    ./common/apps.nix
+
     ./common/audio.nix
     ./common/bootloader.nix
     ./common/display-manager.nix
@@ -18,6 +20,8 @@
     ./common/tz.nix
     # ./common/docker-amd.nix  # For AMD GPUs
     ./common/docker-nvidia.nix # For NVIDIA GPUs
+    ./common/virtualization.nix
+    ./common/ipv6.nix
   ];
 
   services.printing.enable = true;

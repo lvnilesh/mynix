@@ -29,7 +29,6 @@
           system = "x86_64-linux";
           modules = [
             ./hosts/asus.nix
-            ./common/apps.nix
             home-manager.nixosModules.home-manager
             {
               home-manager.useGlobalPkgs = true;
@@ -42,7 +41,6 @@
           system = "x86_64-linux";
           modules = [
             ./hosts/venus.nix
-            ./common/apps.nix
             home-manager.nixosModules.home-manager
             {
               home-manager.useGlobalPkgs = true;
