@@ -27,9 +27,21 @@
       nixosConfigurations = {
         asus = nixpkgs.lib.nixosSystem {
           system = "x86_64-linux";
-          specialArgs = {inherit inputs;};
           modules = [
-            ./hosts/asus/configuration.nix
+            ./hosts/asus.nix
+            ./common/apps.nix
+            home-manager.nixosModules.home-manager
+            {
+              home-manager.useGlobalPkgs = true;
+              home-manager.useUserPackages = true;
+              home-manager.users.cloudgenius = import ./home/cloudgenius.nix;
+            }
+          ];
+        };
+        venus = nixpkgs.lib.nixosSystem {
+          system = "x86_64-linux";
+          modules = [
+            ./hosts/venus.nix
             ./common/apps.nix
             home-manager.nixosModules.home-manager
             {
