@@ -3,6 +3,11 @@
   pkgs,
   ...
 }: {
+  imports = [
+    ./hypr.nix
+    ./waybar.nix
+  ];
+
   home.username = "cloudgenius";
   home.homeDirectory = "/home/cloudgenius";
   home.stateVersion = "25.05";

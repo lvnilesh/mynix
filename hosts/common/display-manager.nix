@@ -1,4 +1,8 @@
-{pkgs, ...}: {
+{
+  pkgs,
+  hyprland,
+  ...
+}: {
   services.xserver.enable = true;
   services.displayManager.gdm.enable = true;
   # services.displayManager.gdm.wayland = false; # default is true;
@@ -25,4 +29,15 @@
     gnome-characters
     gnome-sound-recorder
   ];
+
+  # Configuration for Hyprland and GDM integration
+
+  # Enable Hyprland as an optional session in GDM
+  programs.hyprland = {
+    enable = true;
+    package = hyprland.packages.${pkgs.system}.default;
+  };
+
+  # Add Hyprland to the list of session packages for the display manager
+  services.displayManager.sessionPackages = [pkgs.hyprland];
 }

@@ -1,0 +1,94 @@
+#!/usr/bin/env bash
+# File: brightness-control.sh
+# Description: Controls monitor brightness via DDC with 5% increments
+
+# lock file to prevent concurrent executions
+# This is useful to prevent multiple instances of the script from running simultaneously,
+# delay by 2 seconds if the lock is already held
+# and exit with an error message if the lock cannot be acquired
+LOCKFILE="/tmp/brightness-ddcutil.lock"
+exec 9>"$LOCKFILE"
+flock -w 2 9 || { echo "Another brightness operation is in progress. Try again."; exit 1; }
+
+# The I2C bus for your ASUS monitor
+# You can find the bus number using `ddcutil detect`
+# or `ddcutil capabilities` command
+
+# ddcutil detect | grep -B 1 "card1-DP-3" | grep "I2C bus" | awk '{print $3}' | cut -d'-' -f2
+# ddcutil detect | grep -B 1 "card0-DP-2" | grep "I2C bus" | awk '{print $3}' | cut -d'-' -f2
+# ddcutil --bus=17 getvcp 10
+# ddcutil --bus=17 setvcp 10 37
+
+BUS=17
+
+# Function to get current brightness
+get_current_brightness() {
+    # Extract current brightness value from ddcutil output
+    local current_value=$(ddcutil --bus=$BUS getvcp 10 | grep -oP 'current value = *\K[0-9]+')
+    echo "$current_value"
+}
+
+# Ensure ddcutil is available
+if ! command -v ddcutil &> /dev/null; then
+    echo "Error: ddcutil not found. Please install it first."
+    exit 1
+fi
+
+# Check if the monitor is accessible
+if ! ddcutil --bus=$BUS capabilities &> /dev/null; then
+    echo "Error: Cannot communicate with monitor on bus $BUS."
+    exit 1
+fi
+
+# Get the action from command line argument
+ACTION=$1
+CURRENT=$(get_current_brightness)
+
+# Default step size
+STEP=5
+
+# Handle different actions
+case "$ACTION" in
+    up)
+        # Increase brightness by step size
+        NEW_VALUE=$(( CURRENT + STEP ))
+        # Cap at 100
+        if [ "$NEW_VALUE" -gt 100 ]; then
+            NEW_VALUE=100
+        fi
+        ;;
+    down)
+        # Decrease brightness by step size
+        NEW_VALUE=$(( CURRENT - STEP ))
+        # Floor at 0
+        if [ "$NEW_VALUE" -lt 0 ]; then
+            NEW_VALUE=0
+        fi
+        ;;
+    set)
+        # Remove trailing % if present
+        VALUE=${2%[37m%}
+        if [ -n "$VALUE" ] && [ "$VALUE" -ge 0 ] && [ "$VALUE" -le 100 ]; then
+            NEW_VALUE=$VALUE
+        else
+            echo "Error: Invalid brightness value. Use a number between 0 and 100."
+            exit 1
+        fi
+        ;;
+    get)
+        # Output only the brightness value for Waybar
+        echo "$CURRENT"
+        exit 0
+        ;;
+    *)
+        echo "Usage: $0 [up|down|set VALUE|get]"
+        exit 1
+        ;;
+esac
+
+# Apply the new brightness value
+if [ "$ACTION" != "get" ]; then
+    ddcutil --bus=$BUS setvcp 10 $NEW_VALUE
+    # Output the actual current brightness after setting
+    get_current_brightness
+fi

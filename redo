@@ -1,2 +1,4 @@
+alejandra .
 # sudo nixos-rebuild switch -I nixos-config=$HOME/mynix/configuration.nix
-sudo nixos-rebuild switch --flake ~/mynix#asus
+sudo nixos-rebuild switch --flake .#asus
+# systemctl --user restart waybar.service

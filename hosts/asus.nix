@@ -22,6 +22,7 @@
     ./common/docker-nvidia.nix # For NVIDIA GPUs
     ./common/virtualization.nix
     ./common/ipv6.nix
+    ./common/i2c-dev.nix
   ];
 
   services.printing.enable = true;

@@ -62,6 +62,10 @@
     meslo-lgs-nf # Standalone package
     nerd-fonts.droid-sans-mono
     nerd-fonts.fira-code
+    jetbrains-mono
+    noto-fonts-emoji
+    nerd-fonts._0xproto
+    nerd-fonts.droid-sans-mono
 
     # networking tools
     nmap
@@ -110,5 +114,46 @@
     ethtool
     pciutils # lspci
     usbutils # lsusb
+
+    blueman
+    # blueman-utils
+
+    # for pip install pygobject
+
+    python3
+    python3Packages.pygobject3
+    playerctl
+    gobject-introspection
+    playerctl
+    ninja
+    gcc
+    pkg-config
+    cmake
+    cairo
+    python3Packages.pycairo
+
+    waybar
+    hyprpaper
+    mako
+    pavucontrol
+    kdePackages.dolphin
+    wofi
+    wlsunset
+    eww
+    dunst
+    xdg-desktop-portal
+    xdg-desktop-portal-gtk
+    playerctl
+    rofi
+    kitty
+    swaybg
+    swayidle
+    pamixer
+    light
+    brillo
+    cava
+    hyprshot
+    spotify
+    nwg-displays # generate monitor config for hyprland
   ];
 }
