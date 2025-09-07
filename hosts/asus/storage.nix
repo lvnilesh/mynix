@@ -1,16 +1,16 @@
-{...}: {
+{ ... }: {
   fileSystems."/" = {
-    device = "/dev/disk/by-uuid/98b1af2b-5a50-40ff-a77e-6dee2aa2c87a";
+    device = "/dev/disk/by-uuid/4f47c9a3-f61d-4cee-8f64-d38088a7056c";
     fsType = "ext4";
   };
 
   fileSystems."/boot" = {
-    device = "/dev/disk/by-uuid/F723-38FD";
+    device = "/dev/disk/by-uuid/A315-BF00";
     fsType = "vfat";
-    options = ["fmask=0077" "dmask=0077"];
+    options = [ "fmask=0077" "dmask=0077" ];
   };
 
   swapDevices = [
-    {device = "/dev/disk/by-uuid/68fc8f96-6b0f-4c7f-aa40-059641f1a15e";}
+    { device = "/dev/disk/by-uuid/470abbe0-ef13-45a7-aa84-f15ef9ad755d"; }
   ];
 }

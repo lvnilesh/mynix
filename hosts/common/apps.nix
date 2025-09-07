@@ -18,7 +18,7 @@
     bat
     neofetch
     fastfetch
-    albert
+#    albert
     (google-cloud-sdk.withExtraComponents [
       google-cloud-sdk.components.gke-gcloud-auth-plugin
       google-cloud-sdk.components.kubectl
