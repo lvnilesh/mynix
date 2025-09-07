@@ -35,9 +35,27 @@
   # Enable Hyprland as an optional session in GDM
   programs.hyprland = {
     enable = true;
-    package = hyprland.packages.${pkgs.system}.default;
+    package = hyprland.packages.${pkgs.system}.default; # use only the flake input build
   };
 
-  # Add Hyprland to the list of session packages for the display manager
-  services.displayManager.sessionPackages = [pkgs.hyprland];
+  # Removed services.displayManager.sessionPackages = [ pkgs.hyprland ]; to avoid two Hyprland versions.
+
+  # Add NVIDIA + Wayland specific environment variables early in session
+  environment.variables = {
+    __GLX_VENDOR_LIBRARY_NAME = "nvidia";
+    LIBVA_DRIVER_NAME = "nvidia";
+    GBM_BACKEND = "nvidia-drm";
+    NVD_BACKEND = "direct";
+    WLR_NO_HARDWARE_CURSORS = "1";
+    # If crashes persist, try uncommenting next line to force GLES instead of Vulkan
+    # WLR_RENDERER = "gles2";
+  };
+
+  # Ensure xdg portals including hyprland
+  xdg.portal = {
+    enable = true;
+    # Removed pkgs.xdg-desktop-portal-hyprland to prevent duplicate user unit (xdg-desktop-portal-hyprland.service)
+    # Hyprland's package already brings the portal/unit. Keep GTK for GTK apps fallback.
+    extraPortals = [pkgs.xdg-desktop-portal-gtk];
+  };
 }

@@ -1,3 +1,4 @@
+```
 sudo nixos-rebuild switch -I nixos-config=$HOME/mynix/configuration.nix
 nix-store --verify --check-contents
 sudo nixos-rebuild switch --flake ~/mynix#asus
@@ -14,3 +15,4 @@ env = AQ_DRM_DEVICES,/dev/dri/card2:/dev/dri/card0
 hyprctl monitors
 xrandr --listmonitors
 wlrandr
+```

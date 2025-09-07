@@ -3,10 +3,13 @@
   pkgs,
   ...
 }: {
-  wayland.windowManager.hyprland = {
-    enable = true;
-    extraConfig = builtins.readFile ../dotfiles/hyprland.conf;
-  };
+  #  wayland.windowManager.hyprland = {
+  #    enable = true;
+  #    extraConfig = builtins.readFile ../dotfiles/hyprland.conf;
+  #  };
+
+  # Link Hyprland config from dotfiles
+  home.file.".config/hypr/hyprland.conf".source = ../dotfiles/hyprland.conf;
 
   home.file.".config/waybar/config".source = ../dotfiles/waybar/config;
   home.file.".config/waybar/style.css".source = ../dotfiles/waybar/style.css;

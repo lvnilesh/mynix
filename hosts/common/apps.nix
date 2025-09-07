@@ -138,6 +138,7 @@
     pavucontrol
     kdePackages.dolphin
     wofi
+    # Removed xdg-desktop-portal-hyprland (added via xdg.portal.extraPortals)
     wlsunset
     eww
     dunst
