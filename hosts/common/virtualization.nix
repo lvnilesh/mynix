@@ -4,7 +4,16 @@
   ...
 }: {
   virtualisation = {
-    libvirtd.enable = true;
+    libvirtd = {
+      enable = true;
+      qemu = {
+        ovmf = {
+          enable = true;
+          packages = [pkgs.OVMFFull.fd]; # gives *secboot* firmware
+        };
+        swtpm.enable = true;
+      };
+    };
     spiceUSBRedirection.enable = true;
   };
 
@@ -52,9 +61,18 @@
     };
   };
 
+  systemd.tmpfiles.rules = [
+    # Ensure nvram directory exists (permissions: rwx for owner, rx for group)
+    "d /var/lib/libvirt/qemu/nvram 0750 libvirt-qemu libvirt -"
+    # Copy secure boot vars template once (C) to persistent per-VM file
+    # Uses the ms variant which includes Microsoft KEK/DB for Windows install
+    "C /var/lib/libvirt/qemu/nvram/W11_VARS.fd 0640 libvirt-qemu libvirt /run/libvirt/nix-ovmf/OVMF_VARS.ms.fd"
+  ];
+
   environment.systemPackages = with pkgs; [
     pkgs.linuxPackages.cpupower # Ensure cpupower tool is available for governing performance
     virt-manager
+    swtpm
     libguestfs
     spice
     spice-gtk
