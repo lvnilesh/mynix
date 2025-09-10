@@ -20,11 +20,11 @@
     # hyprpaper configuration
     # Preload images
     preload = /home/cloudgenius/Pictures/wallpapers/eog-wallpaper.png
-    preload = /home/cloudgenius/Pictures/wallpapers/AnimeWaiting.png
+    preload = /home/cloudgenius/Pictures/wallpapers/eog-wallpaper.png
 
     # Assign to monitors (adjust names with `hyprctl monitors` if needed)
     wallpaper = DP-1,/home/cloudgenius/Pictures/wallpapers/eog-wallpaper.png
-    wallpaper = DP-3,/home/cloudgenius/Pictures/wallpapers/AnimeWaiting.png
+    wallpaper = DP-3,/home/cloudgenius/Pictures/wallpapers/eog-wallpaper.png
 
     # Disable splash logo and IPC (enable IPC if planning dynamic changes)
     splash = false

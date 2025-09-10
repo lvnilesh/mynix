@@ -156,5 +156,7 @@
     hyprshot
     spotify
     nwg-displays # generate monitor config for hyprland
+
+    libinput
   ];
 }
