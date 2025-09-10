@@ -1,0 +1,19 @@
+# Windows 11 virt-install for NixOS (system libvirt, persistent NVRAM)
+# Prereq (already via tmpfiles): /var/lib/libvirt/qemu/nvram/W11_VARS.fd copied from OVMF_VARS.ms.fd
+# If missing run:
+#   sudo install -D -m0640 $(readlink -f /run/libvirt/nix-ovmf/OVMF_VARS.ms.fd) /var/lib/libvirt/qemu/nvram/W11_VARS.fd
+# Ensure groups: sudo usermod -aG kvm,libvirt $USER && newgrp kvm
+
+sudo virt-install --connect qemu:///system \
+  --name W11 --memory 8192 --vcpus 4 --cpu host-passthrough --machine q35 --os-variant win11 \
+  --cdrom /home/cloudgenius/Downloads/Win11_24H2_English_x64.iso \
+  --disk path=/var/lib/libvirt/images/win11.qcow2,size=80,bus=virtio,format=qcow2,cache=none,discard=unmap \
+  --network bridge=br0,model=virtio \
+  --graphics spice --video virtio --sound ich9 \
+  --boot loader=/run/libvirt/nix-ovmf/OVMF_CODE.ms.fd,loader.readonly=yes,loader.type=pflash,nvram=/var/lib/libvirt/qemu/nvram/W11_VARS.fd \
+  --tpm backend.type=emulator,backend.version=2.0,model=tpm-tis \
+  --rng /dev/urandom --features kvm_hidden=on,smm=on
+
+# Alternate (let libvirt clone template automatically, no pre-created file):
+# sudo virt-install --connect qemu:///system ... \
+#   --boot loader=/run/libvirt/nix-ovmf/OVMF_CODE.ms.fd,loader.readonly=yes,loader.type=pflash,nvram.template=/run/libvirt/nix-ovmf/OVMF_VARS.ms.fd

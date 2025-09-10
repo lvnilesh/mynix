@@ -15,8 +15,12 @@
 
   programs.home-manager.enable = true;
 
-  home.sessionVariables = {
-    # Add any session variables here if needed
+  home.pointerCursor = {
+    gtk.enable = true;
+    x11.enable = true;
+    package = pkgs.bibata-cursors; # ensures theme is installed
+    name = "Bibata-Modern-Ice";
+    size = 60; # reduced from 96 to balance Wayland/XWayland appearance
   };
 
   home.packages = with pkgs; [

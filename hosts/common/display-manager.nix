@@ -41,6 +41,7 @@
   # Removed services.displayManager.sessionPackages = [ pkgs.hyprland ]; to avoid two Hyprland versions.
 
   # Add NVIDIA + Wayland specific environment variables early in session
+  # Canonical cursor theme + size defined here (system-wide) and complemented by home.pointerCursor for GTK/XDG settings.
   environment.variables = {
     __GLX_VENDOR_LIBRARY_NAME = "nvidia";
     LIBVA_DRIVER_NAME = "nvidia";
@@ -49,6 +50,12 @@
     WLR_NO_HARDWARE_CURSORS = "1";
     # If crashes persist, try uncommenting next line to force GLES instead of Vulkan
     # WLR_RENDERER = "gles2";
+    XCURSOR_THEME = "Bibata-Modern-Ice";
+    XCURSOR_SIZE = "60";
+    HYPRCURSOR_THEME = "Bibata-Modern-Ice";
+    HYPRCURSOR_SIZE = "60";
+    GDK_BACKEND = "wayland"; # remove x11 fallback so GTK prefers Wayland
+    QT_QPA_PLATFORM = "wayland"; # ensure Qt native Wayland
   };
 
   # Ensure xdg portals including hyprland
