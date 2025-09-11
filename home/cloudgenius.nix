@@ -25,7 +25,6 @@
 
   home.packages = with pkgs; [
     kitty
-    alacritty
     vscode
     google-chrome
   ];

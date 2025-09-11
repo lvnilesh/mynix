@@ -49,6 +49,40 @@
       })
     ];
   };
+
+  # Obsidian Wayland wrapper (Electron flags for smoother Wayland experience)
+  obsidianWayland = pkgs.symlinkJoin {
+    name = "obsidian-wayland";
+    paths = [
+      (pkgs.writeShellScriptBin "obsidian-wayland" ''
+        #!${pkgs.bash}/bin/bash
+        export XDG_SESSION_TYPE=wayland
+        export XDG_CURRENT_DESKTOP=Hyprland
+        export XDG_SESSION_DESKTOP=Hyprland
+        export OZONE_PLATFORM=wayland
+        export QT_QPA_PLATFORM=wayland
+        # Optional: reduce input latency / enable VAAPI if desired
+        # export ELECTRON_OZONE_PLATFORM_HINT=wayland
+        # export LIBVA_DRIVER_NAME=nvidia
+        exec ${pkgs.obsidian}/bin/obsidian \
+          --enable-features=WaylandWindowDecorations \
+          --ozone-platform=wayland \
+          --enable-wayland-ime \
+          "$@"
+      '')
+      (pkgs.makeDesktopItem {
+        name = "obsidian-wayland";
+        desktopName = "Obsidian (Wayland)";
+        genericName = "Markdown Knowledge Base";
+        comment = "Obsidian with native Wayland flags";
+        categories = ["Office" "Utility" "TextEditor"];
+        exec = "obsidian-wayland";
+        icon = "obsidian";
+        terminal = false;
+        type = "Application";
+      })
+    ];
+  };
 in {
   # List packages installed in system profile. To search, run:
   # $ nix search wget
@@ -154,6 +188,8 @@ in {
 
     # conferencing / meetings (Wayland-wrapped Zoom; replaces bare zoom-us entry)
     zoomWayland
+    obsidian
+    obsidianWayland
 
     # system call monitoring
     strace # system call monitoring
@@ -199,7 +235,7 @@ in {
     xdg-desktop-portal
     xdg-desktop-portal-gtk
     playerctl
-    rofi
+    # rofi
     kitty
     swaybg
     swayidle

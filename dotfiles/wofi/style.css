@@ -1,0 +1,87 @@
+/* Tokyo Night inspired (matches kitty + Hypr theme) */
+
+* {
+  font-family: "JetBrainsMono Nerd Font", monospace;
+  font-size: 16px;
+  color: #c0caf5;
+  border: none;
+  box-shadow: none;
+}
+
+window {
+  background: rgba(26,27,38,0.92);
+  border-radius: 14px;
+  padding: 16px 18px 12px 18px;
+  border: 1px solid #414868;
+}
+
+#input {
+  margin: 0 0 12px 0;
+  padding: 10px 14px;
+  background: rgba(41,42,54,0.85);
+  border-radius: 10px;
+  border: 1px solid #343b4e;
+  color: #c0caf5;
+  caret-color: #7aa2f7;
+}
+
+#input:focus {
+  border: 1px solid #7aa2f7;
+  box-shadow: 0 0 0 2px rgba(122,162,247,0.15);
+}
+
+#scroll {
+  margin: 0;
+}
+
+#entry {
+  padding: 6px 10px;
+  margin: 2px 0;
+  border-radius: 8px;
+  background: transparent;
+}
+
+#entry image {
+  margin-right: 10px;
+}
+
+#entry:selected {
+  background: linear-gradient(90deg,#1f2335,#24283b);
+  border: 1px solid #7aa2f7;
+}
+
+#entry:selected * {
+  color: #7aa2f7;
+}
+
+#entry:hover:not(:selected) {
+  background: rgba(56,61,78,0.55);
+}
+
+#text {
+  margin: 0;
+}
+
+#prompt {
+  margin-right: 8px;
+  color: #7aa2f7;
+}
+
+#no-results {
+  padding: 14px;
+  color: #f7768e;
+  font-style: italic;
+}
+
+#img {
+  border-radius: 4px;
+}
+
+@keyframes subtleFade {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+window, #entry {
+  animation: subtleFade 120ms ease-out;
+}
