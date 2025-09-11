@@ -70,8 +70,82 @@
     (pkgs.qt6Packages.kvantum-qt6 or pkgs.adwaita-qt)
   ];
 
-  programs.git.enable = true;
-  programs.zsh.enable = true;
+  programs.git = {
+    enable = true;
+    aliases = {
+      # Quality-of-life navigation / inspection
+      st = "status -sb"; # short status
+      s = "status";
+      br = "branch";
+      co = "checkout";
+      cob = "checkout -b";
+      sw = "switch";
+      swc = "switch -c";
+      cp = "cherry-pick";
+      cpa = "cherry-pick --abort";
+      cpc = "cherry-pick --continue";
+
+      # Commits
+      ci = "commit";
+      com = "commit -m";
+      amend = "commit --amend";
+      amendn = "commit --amend --no-edit";
+      ca = "commit -a -m";
+      wip = "commit -am WIP";
+      fixup = "commit --fixup";
+
+      # Logs / diff
+      lg = "log --graph --decorate --oneline --abbrev-commit";
+      lga = "log --graph --decorate --oneline --abbrev-commit --all";
+      last = "log -1 --stat";
+      df = "diff";
+      dff = "diff --name-only";
+      dfc = "diff --cached";
+
+      # Staging helpers
+      unstage = "reset HEAD --"; # git unstage <path>
+      discard = "checkout --"; # git discard <path>
+      aa = "add -A";
+      ap = "add -p";
+
+      # Rebases / merges
+      rb = "rebase";
+      rbi = "rebase -i";
+      rbc = "rebase --continue";
+      rba = "rebase --abort";
+      mt = "mergetool";
+
+      # Reset / clean
+      undo = "reset --soft HEAD~1";
+      hard = "reset --hard";
+      cleanall = "clean -fdx";
+
+      # Stash
+      ss = "stash";
+      sl = "stash list";
+      sa = "stash apply";
+      sp = "stash pop";
+
+      # Push / pull
+      pl = "pull --ff-only";
+      plr = "pull --rebase";
+      ps = "push";
+      psu = "push -u origin HEAD";
+      please = "push --force-with-lease"; # safer than --force
+
+      # Upstream & root info
+      root = "rev-parse --show-toplevel";
+      ahead = "rev-list --count @{u}..HEAD";
+      behind = "rev-list --count HEAD..@{u}";
+      where = "branch --show-current";
+    };
+  };
+  programs.bash = {
+    enable = true;
+    shellAliases = {
+      g = "git"; # enables `g st` etc. using defined git aliases
+    };
+  };
 
   programs.kitty = {
     enable = true;
