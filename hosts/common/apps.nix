@@ -1,4 +1,55 @@
-{pkgs, ...}: {
+{pkgs, ...}: let
+  # Zoom wrapper launching with Wayland-friendly environment for Hyprland.
+  # Provides a distinct desktop entry "Zoom (Wayland)".
+  zoomWayland = pkgs.symlinkJoin {
+    name = "zoom-wayland";
+    paths = [
+      (pkgs.writeShellScriptBin "zoom-wayland" ''
+        #!${pkgs.bash}/bin/bash
+        # Wayland + PipeWire wrapper for Zoom under Hyprland.
+        # Enables: native Wayland, PipeWire camera/audio, portal-based screen share.
+
+        # Prefer Wayland; fall back to X11 if it fails.
+        export QT_QPA_PLATFORM=wayland
+        export XDG_SESSION_TYPE=wayland
+        export QT_WAYLAND_DISABLE_WINDOWDECORATION=1
+        # High DPI / scaling
+        export QT_ENABLE_HIGHDPI_SCALING=1
+
+        # PipeWire (camera & audio) – ensure PipeWire / wireplumber services are running system-wide.
+        # Zoom still uses ALSA/Pulse internally; on NixOS Pulse is usually a PipeWire compat layer.
+        export PIPEWIRE_LATENCY="128/48000"
+        # Encourage usage of portals for screen sharing (xdg-desktop-portal + xdg-desktop-portal-wlr/hyprland/gtk already in systemPackages)
+        export XDG_CURRENT_DESKTOP=Hyprland
+        export XDG_SESSION_DESKTOP=Hyprland
+        # Disable Wayland color management features that sometimes cause capture issues (optional)
+        # export WLR_NO_HARDWARE_CURSORS=1  # Uncomment if cursor missing in shares
+
+        # Optional: force portal for screen sharing (some apps honor this)
+        export GTK_USE_PORTAL=1
+
+        # Camera troubleshooting tip (uncomment if camera fails):
+        # export LIBVA_DRIVER_NAME=nvidia
+
+        exec ${pkgs.zoom-us}/bin/zoom "$@" || (
+          echo "Wayland launch failed – retrying with X11 (xcb)" >&2;
+          QT_QPA_PLATFORM=xcb exec ${pkgs.zoom-us}/bin/zoom "$@"
+        )
+      '')
+      (pkgs.makeDesktopItem {
+        name = "zoom-wayland";
+        desktopName = "Zoom (Wayland)";
+        genericName = "Zoom Video Conference";
+        comment = "Zoom with Wayland + PipeWire (camera/audio/screen share) under Hyprland";
+        categories = ["Network" "Chat" "Video"];
+        exec = "zoom-wayland";
+        icon = "Zoom"; # Icon from zoom-us package
+        terminal = false;
+        type = "Application";
+      })
+    ];
+  };
+in {
   # List packages installed in system profile. To search, run:
   # $ nix search wget
   environment.systemPackages = with pkgs; [
@@ -100,6 +151,9 @@
     btop # replacement of htop/nmon
     iotop # io monitoring
     iftop # network monitoring
+
+    # conferencing / meetings (Wayland-wrapped Zoom; replaces bare zoom-us entry)
+    zoomWayland
 
     # system call monitoring
     strace # system call monitoring
