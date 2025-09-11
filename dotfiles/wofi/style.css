@@ -1,33 +1,33 @@
-/* Tokyo Night inspired (matches kitty + Hypr theme) */
+/* Nord inspired theme */
 
 * {
   font-family: "JetBrainsMono Nerd Font", monospace;
   font-size: 16px;
-  color: #c0caf5;
+  color: #D8DEE9; /* NORD4 */
   border: none;
   box-shadow: none;
 }
 
 window {
-  background: rgba(26,27,38,0.92);
+  background: rgba(46,52,64,0.94); /* NORD0 */
   border-radius: 14px;
   padding: 16px 18px 12px 18px;
-  border: 1px solid #414868;
+  border: 1px solid #4C566A; /* NORD3 */
 }
 
 #input {
   margin: 0 0 12px 0;
   padding: 10px 14px;
-  background: rgba(41,42,54,0.85);
+  background: rgba(59,66,82,0.85); /* NORD1 */
   border-radius: 10px;
-  border: 1px solid #343b4e;
-  color: #c0caf5;
-  caret-color: #7aa2f7;
+  border: 1px solid #434C5E; /* NORD2 */
+  color: #D8DEE9; /* NORD4 */
+  caret-color: #81A1C1; /* NORD9 */
 }
 
 #input:focus {
-  border: 1px solid #7aa2f7;
-  box-shadow: 0 0 0 2px rgba(122,162,247,0.15);
+  border: 1px solid #81A1C1; /* NORD9 */
+  box-shadow: 0 0 0 2px rgba(129,161,193,0.25);
 }
 
 #scroll {
@@ -46,16 +46,16 @@ window {
 }
 
 #entry:selected {
-  background: linear-gradient(90deg,#1f2335,#24283b);
-  border: 1px solid #7aa2f7;
+  background: linear-gradient(90deg,#3B4252,#434C5E); /* NORD1 -> NORD2 */
+  border: 1px solid #81A1C1; /* NORD9 */
 }
 
 #entry:selected * {
-  color: #7aa2f7;
+  color: #81A1C1; /* NORD9 */
 }
 
 #entry:hover:not(:selected) {
-  background: rgba(56,61,78,0.55);
+  background: rgba(67,76,94,0.55); /* NORD2 with alpha */
 }
 
 #text {
@@ -64,12 +64,12 @@ window {
 
 #prompt {
   margin-right: 8px;
-  color: #7aa2f7;
+  color: #81A1C1; /* NORD9 */
 }
 
 #no-results {
   padding: 14px;
-  color: #f7768e;
+  color: #BF616A; /* NORD11 */
   font-style: italic;
 }
 
