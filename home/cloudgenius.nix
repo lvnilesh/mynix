@@ -147,6 +147,73 @@
     };
   };
 
+  # Starship prompt (Nord aligned)
+  programs.starship = {
+    enable = true;
+    settings = {
+      add_newline = true;
+      palette = "nord";
+      palettes = {
+        nord = {
+          nord0 = "#2E3440";
+          nord1 = "#3B4252";
+          nord4 = "#D8DEE9";
+          cyan = "#88C0D0";
+          blue = "#81A1C1";
+          green = "#A3BE8C";
+          purple = "#B48EAD";
+          yellow = "#EBCB8B";
+          red = "#BF616A";
+        };
+      };
+      # Removed time module and updated symbols; order kept concise
+      format = "$directory$git_branch$git_status$nodejs$rust$python$cmd_duration\n$character";
+      scan_timeout = 10; # ms per module scan to keep prompt snappy
+      character = {
+        success_symbol = "[➜](blue)"; # new primary prompt arrow
+        error_symbol = "[✗](red)"; # clearer error indicator
+        vicmd_symbol = "[«](purple)"; # normal mode indicator in modal shells
+      };
+      directory = {
+        style = "bold cyan";
+        truncation_length = 3;
+        truncate_to_repo = true;
+      };
+      git_branch = {
+        symbol = " "; # nerd font branch icon
+        style = "blue";
+      };
+      git_status = {
+        style = "yellow";
+        conflicted = "⚔";
+        ahead = "↑";
+        behind = "↓";
+        diverged = "⇅";
+        staged = "+";
+        modified = "~";
+        renamed = "»";
+        deleted = "✖";
+        untracked = "?";
+      };
+      cmd_duration = {
+        min_time = 500;
+        format = "[⏱ $duration](purple)";
+      };
+      nodejs = {
+        symbol = " ";
+        style = "green";
+      };
+      python = {
+        symbol = " ";
+        style = "yellow";
+      };
+      rust = {
+        symbol = " ";
+        style = "red";
+      };
+    };
+  };
+
   programs.kitty = {
     enable = true;
     settings = {
