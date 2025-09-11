@@ -83,31 +83,36 @@
   # VSCode Nord Dark theme configuration
   programs.vscode = {
     enable = true;
-    extensions = with pkgs.vscode-extensions; [
-      arcticicestudio.nord-visual-studio-code
-      pkief.material-icon-theme
-    ];
-    userSettings = {
-      "workbench.colorTheme" = "Nord";
-      "workbench.preferredDarkColorTheme" = "Nord";
-      "workbench.startupEditor" = "none";
-      "editor.fontFamily" = "JetBrainsMono Nerd Font, monospace";
-      "editor.fontLigatures" = true;
-      "editor.bracketPairColorization.enabled" = true;
-      "editor.semanticHighlighting.enabled" = true;
-      "window.titleBarStyle" = "custom";
-      "terminal.integrated.fontFamily" = "JetBrainsMono Nerd Font";
-      "terminal.integrated.minimumContrastRatio" = 4.2;
-      # Apply Nord-style Material Icon Theme tweaks
-      "workbench.iconTheme" = "material-icon-theme";
-      "material-icon-theme.saturation" = 0;
-      "material-icon-theme.folders.color" = "#81A1C1";
-      "material-icon-theme.files.color" = "#88C0D0";
-      "material-icon-theme.folders.theme" = "specific";
-      "material-icon-theme.hidesExplorerArrows" = false;
-      "files.trimTrailingWhitespace" = true;
-      "files.insertFinalNewline" = true;
-      "explorer.compactFolders" = false;
+    profiles = {
+      default = {
+        extensions = with pkgs.vscode-extensions; [
+          arcticicestudio.nord-visual-studio-code
+          pkief.material-icon-theme
+        ];
+        userSettings = {
+          "workbench.colorTheme" = "Nord";
+          "workbench.preferredDarkColorTheme" = "Nord";
+          "workbench.startupEditor" = "none";
+          "editor.fontFamily" = "JetBrainsMono Nerd Font, monospace";
+          "editor.fontLigatures" = true;
+          "editor.bracketPairColorization.enabled" = true;
+          "editor.semanticHighlighting.enabled" = true;
+          "window.titleBarStyle" = "custom";
+          "terminal.integrated.fontFamily" = "JetBrainsMono Nerd Font";
+          "terminal.integrated.minimumContrastRatio" = 4.2;
+          # Apply Nord-style Material Icon Theme tweaks
+          "workbench.iconTheme" = "material-icon-theme";
+          "material-icon-theme.saturation" = 0;
+          "material-icon-theme.folders.color" = "#81A1C1";
+          "material-icon-theme.files.color" = "#88C0D0";
+          "material-icon-theme.folders.theme" = "specific";
+          "material-icon-theme.hidesExplorerArrows" = false;
+          "files.trimTrailingWhitespace" = true;
+          "files.insertFinalNewline" = true;
+          "explorer.compactFolders" = false;
+          "git.confirmSync" = false;
+        };
+      };
     };
   };
 }
