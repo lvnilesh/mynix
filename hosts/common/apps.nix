@@ -158,5 +158,9 @@
     nwg-displays # generate monitor config for hyprland
 
     libinput
+    # Flashing USB images – balenaEtcher attr missing in current nixpkgs; using popsicle instead
+    popsicle
+    # Balena CLI (for balenaCloud / openBalena)
+    balena-cli
   ];
 }
