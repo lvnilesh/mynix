@@ -23,6 +23,9 @@
     ./common/virtualization.nix
     ./common/ipv6.nix
     ./common/i2c-dev.nix
+    ./common/resilio-sync.nix
+    ./common/smb-mounts.nix
+    ./common/kwallet-smb.nix
   ];
 
   services.printing.enable = true;

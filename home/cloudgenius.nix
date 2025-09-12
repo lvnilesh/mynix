@@ -68,6 +68,7 @@
     papirus-icon-theme
     nordic
     (pkgs.qt6Packages.kvantum-qt6 or pkgs.adwaita-qt)
+    resilio-sync
   ];
 
   programs.git = {

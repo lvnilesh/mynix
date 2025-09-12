@@ -252,5 +252,13 @@ in {
     popsicle
     # Balena CLI (for balenaCloud / openBalena)
     balena-cli
+
+    # additional packages from separate module
+    kdePackages.dolphin
+    kio-extras
+    kdePackages.kwallet
+    kdePackages.kwalletmanager
+    samba
+    cifs-utils
   ];
 }

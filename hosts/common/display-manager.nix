@@ -1,6 +1,7 @@
 {
   pkgs,
   hyprland,
+  lib,
   ...
 }: {
   services.xserver.enable = true;
@@ -64,5 +65,10 @@
     # Removed pkgs.xdg-desktop-portal-hyprland to prevent duplicate user unit (xdg-desktop-portal-hyprland.service)
     # Hyprland's package already brings the portal/unit. Keep GTK for GTK apps fallback.
     extraPortals = [pkgs.xdg-desktop-portal-gtk];
+  };
+
+  security.pam.services = {
+    login.kwallet.enable = lib.mkDefault true;
+    gdm-password.kwallet.enable = lib.mkDefault true;
   };
 }
