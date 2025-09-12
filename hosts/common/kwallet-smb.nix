@@ -6,7 +6,7 @@
 }: {
   # Add required packages for Dolphin SMB + password storage
   environment.systemPackages = with pkgs; [
-    kio-extras
+    kdePackages.kio-extras
     kdePackages.kwallet
     kdePackages.kwalletmanager
     samba
