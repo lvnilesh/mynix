@@ -17,6 +17,14 @@
     spiceUSBRedirection.enable = true;
   };
 
+  # Provide generation-stable firmware paths under /etc so libvirt domain XML
+  # does NOT embed a store hash that changes on each flake update. Use the 'ms'
+  # (Microsoft keys) secure boot variant to match the vars template we copy below.
+  environment.etc = {
+    "ovmf/OVMF_CODE.ms.fd".source = "${pkgs.OVMFFull.fd}/FV/OVMF_CODE.ms.fd";
+    "ovmf/OVMF_VARS.ms.fd".source = "${pkgs.OVMFFull.fd}/FV/OVMF_VARS.ms.fd";
+  };
+
   users.groups.libvirtd = {};
   users.groups.kvm = {};
 
@@ -64,8 +72,9 @@
   systemd.tmpfiles.rules = [
     # Ensure nvram directory exists (permissions: rwx for owner, rx for group)
     "d /var/lib/libvirt/qemu/nvram 0750 libvirt-qemu libvirt -"
-    # Copy secure boot vars template once (C) to persistent per-VM file
-    # Uses the ms variant which includes Microsoft KEK/DB for Windows install
+    # Create persistent NVRAM vars file for the Windows 11 VM (only if absent).
+    # We keep copying from /run/libvirt/nix-ovmf to pick up initial template;
+    # subsequent flake updates won't overwrite it, preserving enrolled keys.
     "C /var/lib/libvirt/qemu/nvram/W11_VARS.fd 0640 libvirt-qemu libvirt /run/libvirt/nix-ovmf/OVMF_VARS.ms.fd"
   ];
 

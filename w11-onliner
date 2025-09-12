@@ -1,19 +1,251 @@
-# Windows 11 virt-install for NixOS (system libvirt, persistent NVRAM)
-# Prereq (already via tmpfiles): /var/lib/libvirt/qemu/nvram/W11_VARS.fd copied from OVMF_VARS.ms.fd
-# If missing run:
-#   sudo install -D -m0640 $(readlink -f /run/libvirt/nix-ovmf/OVMF_VARS.ms.fd) /var/lib/libvirt/qemu/nvram/W11_VARS.fd
-# Ensure groups: sudo usermod -aG kvm,libvirt $USER && newgrp kvm
+#!/usr/bin/env bash
+set -euo pipefail
 
-sudo virt-install --connect qemu:///system \
-  --name W11 --memory 8192 --vcpus 4 --cpu host-passthrough --machine q35 --os-variant win11 \
-  --cdrom /home/cloudgenius/Downloads/Win11_24H2_English_x64.iso \
-  --disk path=/var/lib/libvirt/images/win11.qcow2,size=80,bus=virtio,format=qcow2,cache=none,discard=unmap \
-  --network bridge=br0,model=virtio \
-  --graphics spice --video virtio --sound ich9 \
-  --boot loader=/run/libvirt/nix-ovmf/OVMF_CODE.ms.fd,loader.readonly=yes,loader.type=pflash,nvram=/var/lib/libvirt/qemu/nvram/W11_VARS.fd \
-  --tpm backend.type=emulator,backend.version=2.0,model=tpm-tis \
-  --rng /dev/urandom --features kvm_hidden=on,smm=on
+usage() {
+  cat <<EOF
+Usage: $0 [--force] [--fresh] [--disk-bus virtio|sata] [--drivers-iso /path/virtio-win.iso] [--auto-drivers]
+  --force         Undefine existing domain if present, keep disk/NVRAM.
+  --fresh         Undefine domain and delete disk + NVRAM, recreate clean (implies --force).
+  --disk-bus      Primary system disk bus (virtio for performance, sata for built-in Windows driver). Default: virtio.
+  --drivers-iso   Attach a secondary CDROM with virtio drivers (virtio-win ISO). Recommended when using --disk-bus virtio.
+  --auto-drivers  Automatically download/cache latest virtio-win ISO into /var/lib/libvirt/boot and attach.
+If domain exists and no flags: attempt to start it.
+Examples:
+  $0 --fresh --disk-bus sata            # Simpler install, no extra drivers needed.
+  $0 --fresh --disk-bus virtio --drivers-iso /var/lib/libvirt/boot/virtio-win.iso
+EOF
+}
 
-# Alternate (let libvirt clone template automatically, no pre-created file):
-# sudo virt-install --connect qemu:///system ... \
-#   --boot loader=/run/libvirt/nix-ovmf/OVMF_CODE.ms.fd,loader.readonly=yes,loader.type=pflash,nvram.template=/run/libvirt/nix-ovmf/OVMF_VARS.ms.fd
+FORCE=0
+FRESH=0
+DISK_BUS="virtio"
+DRIVERS_ISO=""
+AUTO_DRIVERS=0
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    --force) FORCE=1; shift;;
+    --fresh) FORCE=1; FRESH=1; shift;;
+    --disk-bus)
+      [[ $# -ge 2 ]] || { echo "--disk-bus needs value" >&2; exit 1; }
+      DISK_BUS="$2"; shift 2;
+      case "$DISK_BUS" in virtio|sata) ;; *) echo "Invalid --disk-bus: $DISK_BUS" >&2; exit 1;; esac ;;
+  --drivers-iso)
+      [[ $# -ge 2 ]] || { echo "--drivers-iso needs path" >&2; exit 1; }
+      DRIVERS_ISO="$2"; shift 2;;
+  --auto-drivers) AUTO_DRIVERS=1; shift;;
+    -h|--help) usage; exit 0;;
+    *) echo "Unknown arg: $1" >&2; usage; exit 1;;
+  esac
+done
+
+# Windows 11 virt-install helper (stable firmware paths, TPM 2.0, Secure Boot)
+# Specs: 16 GiB RAM, 1 socket / 8 cores / 1 thread (8 vCPUs), 200G qcow2 disk
+# Requirements:
+#  * Groups: user is in kvm,libvirt
+#  * Firmware symlinks from Nix config: /etc/ovmf/OVMF_CODE.ms.fd & /etc/ovmf/OVMF_VARS.ms.fd
+#  * ISO path below exists
+
+VM_NAME="win11"
+ISO="/home/cloudgenius/Downloads/Win11_24H2_English_x64.iso"
+DISK="/var/lib/libvirt/images/${VM_NAME}.qcow2"
+DISK_SIZE_GB=200
+NVRAM="/var/lib/libvirt/qemu/nvram/${VM_NAME}_VARS.fd"
+CODE_FW="/etc/ovmf/OVMF_CODE.ms.fd"
+VARS_TMPL="/etc/ovmf/OVMF_VARS.ms.fd"
+
+# Determine libvirt runtime ownership (NixOS may run qemu as root)
+if id libvirt-qemu >/dev/null 2>&1; then
+  VM_USER=libvirt-qemu
+else
+  VM_USER=root
+fi
+if getent group libvirt >/dev/null 2>&1; then
+  VM_GROUP=libvirt
+elif getent group kvm >/dev/null 2>&1; then
+  VM_GROUP=kvm
+else
+  VM_GROUP=root
+fi
+
+if [[ ! -f "$ISO" ]]; then
+  echo "ISO not found: $ISO" >&2; exit 1
+fi
+if (( AUTO_DRIVERS )); then
+  BOOT_DIR="/var/lib/libvirt/boot"
+  sudo install -d -m0755 "$BOOT_DIR"
+  # Use Fedora repo for virtio-win ISO listing
+  if ! command -v curl >/dev/null 2>&1; then echo "curl required for --auto-drivers" >&2; exit 1; fi
+  echo "Fetching latest virtio-win ISO URL..." >&2
+  # Simple heuristic: fetch directory listing JSON or HTML and grep for virtio-win .iso
+  # Prefer archive for stable naming; fallback to latest directory if parse fails
+  VIRTIO_ARCHIVE="https://fedorapeople.org/groups/virt/virtio-win/direct-downloads/archive-virtio/"
+  VIRTIO_LATEST_DIR="https://fedorapeople.org/groups/virt/virtio-win/direct-downloads/"
+  HTML=$(curl -fsSL "$VIRTIO_ARCHIVE" || true)
+  LATEST=$(echo "$HTML" | grep -Eo 'virtio-win-[0-9]+\.[0-9]+\.[0-9]+-\d+\.iso' | sort -V | tail -n1 || true)
+  if [[ -z "$LATEST" ]]; then
+    HTML2=$(curl -fsSL "$VIRTIO_LATEST_DIR" || true)
+    LATEST=$(echo "$HTML2" | grep -Eo 'virtio-win-[0-9]+\.[0-9]+\.[0-9]+-\d+\.iso' | sort -V | tail -n1 || true)
+  fi
+  if [[ -z "$LATEST" ]]; then
+    # Fallback list (update occasionally)
+    for cand in \
+     virtio-win-0.1.229-1.iso \
+     virtio-win-0.1.228-1.iso \
+     virtio-win-0.1.227-1.iso; do
+      if curl -Ifs "$VIRTIO_ARCHIVE$cand" >/dev/null; then LATEST="$cand"; break; fi
+    done
+  fi
+  if [[ -z "$LATEST" ]]; then
+    echo "Could not determine latest virtio-win ISO (network or layout change)." >&2; exit 1
+  fi
+  DRIVERS_ISO="$BOOT_DIR/$LATEST"
+  if [[ ! -f "$DRIVERS_ISO" ]]; then
+    echo "Downloading $LATEST ..." >&2
+    curl -fSL -o "/tmp/$LATEST" "$VIRTIO_ARCHIVE$LATEST" || curl -fSL -o "/tmp/$LATEST" "$VIRTIO_LATEST_DIR$LATEST"
+    sudo mv "/tmp/$LATEST" "$DRIVERS_ISO"
+  else
+    echo "Using cached $DRIVERS_ISO" >&2
+  fi
+fi
+
+if [[ -n "$DRIVERS_ISO" && ! -f "$DRIVERS_ISO" ]]; then
+  echo "Drivers ISO not found: $DRIVERS_ISO" >&2; exit 1
+fi
+if [[ "$DISK_BUS" == "virtio" && -z "$DRIVERS_ISO" ]]; then
+  echo "Note: Using virtio disk without --drivers-iso; Windows installer won't see disk until drivers loaded. Use --disk-bus sata or supply --drivers-iso." >&2
+fi
+for f in "$CODE_FW" "$VARS_TMPL"; do
+  [[ -f $f ]] || { echo "Missing firmware file: $f" >&2; exit 1; }
+done
+
+sudo install -d -m0755 /var/lib/libvirt/images
+sudo install -d -m0750 -o "$VM_USER" -g "$VM_GROUP" /var/lib/libvirt/qemu/nvram
+
+if (( FRESH )); then
+  echo "Fresh mode: removing existing disk & NVRAM (if they exist)." >&2
+  sudo rm -f "$DISK" "$NVRAM" || true
+fi
+
+if [[ ! -f "$DISK" ]]; then
+  echo "Creating disk $DISK (${DISK_SIZE_GB}G)";
+  sudo qemu-img create -f qcow2 "$DISK" "${DISK_SIZE_GB}G" >/dev/null
+fi
+
+# Do NOT pre-create NVRAM; let libvirt clone from template to avoid master var store errors.
+if [[ -f "$NVRAM" ]]; then
+  echo "Existing NVRAM file present (will reuse if template attribute matches): $NVRAM";
+fi
+
+if sudo virsh -c qemu:///system dominfo "$VM_NAME" &>/dev/null; then
+  if (( FORCE )); then
+    echo "Undefining existing domain $VM_NAME (force=${FORCE}, fresh=${FRESH})." >&2
+    sudo virsh -c qemu:///system destroy "$VM_NAME" &>/dev/null || true
+    sudo virsh -c qemu:///system undefine "$VM_NAME" --nvram || sudo virsh -c qemu:///system undefine "$VM_NAME" || true
+  else
+    echo "Domain $VM_NAME already exists; starting it (use --force or --fresh to recreate)." >&2
+    sudo virsh -c qemu:///system start "$VM_NAME" && exit 0
+    echo "Failed to start existing domain." >&2; exit 1
+  fi
+fi
+
+TMP_XML=$(mktemp /tmp/${VM_NAME}-XXXX.xml)
+cat > "$TMP_XML" <<EOF
+<domain type='kvm'>
+  <name>$VM_NAME</name>
+  <memory unit='MiB'>16384</memory>
+  <currentMemory unit='MiB'>16384</currentMemory>
+  <vcpu placement='static'>8</vcpu>
+  <cpu mode='host-passthrough'>
+    <topology sockets='1' cores='8' threads='1'/>
+    <feature policy='require' name='topoext'/>
+  </cpu>
+  <os>
+    <type arch='x86_64' machine='pc-q35-8.2'>hvm</type>
+  <loader readonly='yes' type='pflash' format='raw'>$CODE_FW</loader>
+  <nvram template='$VARS_TMPL'>$NVRAM</nvram>
+  </os>
+  <features>
+    <acpi/>
+    <apic/>
+    <hyperv>
+      <relaxed state='on'/>
+      <vapic state='on'/>
+      <spinlocks state='on' retries='8191'/>
+    </hyperv>
+    <kvm><hidden state='on'/></kvm>
+    <vmport state='off'/>
+    <smm state='on'/>
+  </features>
+  <clock offset='localtime'>
+    <timer name='rtc' tickpolicy='catchup'/>
+    <timer name='hpet' present='no'/>
+  </clock>
+  <on_poweroff>destroy</on_poweroff>
+  <on_reboot>restart</on_reboot>
+  <on_crash>restart</on_crash>
+  <devices>
+    <emulator>/run/libvirt/nix-emulators/qemu-system-x86_64</emulator>
+    <disk type='file' device='disk'>
+      <driver name='qemu' type='qcow2' cache='none' discard='unmap'/>
+      <source file='$DISK'/>
+      <target dev='$([ "$DISK_BUS" = virtio ] && echo vda || echo sda)' bus='$DISK_BUS'/>
+      <boot order='2'/>
+    </disk>
+    <disk type='file' device='cdrom'>
+      <driver name='qemu' type='raw'/>
+      <source file='$ISO'/>
+      <target dev='$([ "$DISK_BUS" = virtio ] && echo sdb || echo sdc)' bus='sata'/>
+      <readonly/>
+      <boot order='1'/>
+    </disk>
+$(
+  if [[ -n "$DRIVERS_ISO" ]]; then
+    cat <<DRIVE
+    <disk type='file' device='cdrom'>
+      <driver name='qemu' type='raw'/>
+      <source file='$DRIVERS_ISO'/>
+      <target dev='$([ "$DISK_BUS" = virtio ] && echo sdc || echo sdb)' bus='sata'/>
+      <readonly/>
+    </disk>
+DRIVE
+  fi)
+    <controller type='usb' model='qemu-xhci'/>
+    <interface type='network'>
+      <source network='default'/>
+      <model type='virtio'/>
+    </interface>
+    <tpm model='tpm-crb'>
+      <backend type='emulator' version='2.0'/>
+    </tpm>
+    <input type='tablet' bus='usb'/>
+    <input type='keyboard' bus='usb'/>
+    <graphics type='spice' autoport='yes'>
+      <listen type='none'/>
+    </graphics>
+    <video><model type='virtio' heads='1'/></video>
+    <channel type='unix'>
+      <target type='virtio' name='org.qemu.guest_agent.0'/>
+    </channel>
+    <rng model='virtio'>
+      <backend model='random'>/dev/urandom</backend>
+    </rng>
+  </devices>
+</domain>
+EOF
+
+echo "Defining domain via virsh XML: $TMP_XML"
+sudo virsh -c qemu:///system define "$TMP_XML" >/dev/null
+echo "Starting domain $VM_NAME"
+if ! sudo virsh -c qemu:///system start "$VM_NAME"; then
+  echo "Start failed. Attempting fallback: remove stale NVRAM and recreate via template." >&2
+  sudo rm -f "$NVRAM" || true
+  # Regenerate XML with same template attribute
+  sudo virsh -c qemu:///system undefine "$VM_NAME" --nvram || true
+  sudo virsh -c qemu:///system define "$TMP_XML" >/dev/null
+  if sudo virsh -c qemu:///system start "$VM_NAME"; then
+    echo "VM $VM_NAME started after NVRAM fallback."; exit 0
+  else
+    echo "Failed again after fallback." >&2; exit 1
+  fi
+fi
+echo "VM $VM_NAME started. Connect with: virt-viewer --connect qemu:///system $VM_NAME"

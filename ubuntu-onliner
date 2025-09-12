@@ -1,0 +1,238 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+usage() {
+  cat <<EOF
+Usage: $0 [--force] [--fresh] [--bridge br0] [--direct-if eno1] [--name ubuntu] [--ram 4096] [--vcpus 2] [--disk 40] \
+          [--iso /path/ubuntu.iso] [--cloud-init] [--ci-user user] [--ci-pass pass] [--ci-ssh-key ~/.ssh/id_rsa.pub]
+
+Creates / updates a Ubuntu LTS VM with a bridge interface (no NAT). Requires an existing Linux bridge on host.
+
+Flags:
+  --force         Redefine domain if exists (keep disk/NVRAM)
+  --fresh         Recreate domain & delete disk + NVRAM (implies --force)
+  --bridge NAME   Host bridge to attach (must already exist). Default: br0
+  --direct-if IF  Use macvtap direct mode on physical interface (mutually exclusive with --bridge)
+  --name NAME     VM name (default ubuntu)
+  --ram MiB       Memory in MiB (default 4096)
+  --vcpus N       vCPUs (default 2)
+  --disk GB       Disk size in GB (default 40)
+  --iso PATH      Ubuntu Server LTS install ISO path (required once for install)
+  --cloud-init    Generate and attach a minimal cloud-init seed (nocloud)
+  --ci-user USER  Cloud-init user (default ubuntu)
+  --ci-pass PASS  Plain password (hashed internally) (optional)
+  --ci-ssh-key F  SSH public key file (optional)
+
+Examples:
+  $0 --fresh --iso /var/lib/libvirt/boot/ubuntu-24.04-live-server-amd64.iso
+  $0 --cloud-init --ci-ssh-key ~/.ssh/id_ed25519.pub
+
+After install, detach ISO (edit domain or rerun without --iso flag using --force).
+EOF
+}
+
+FORCE=0; FRESH=0
+BRIDGE=br0
+DIRECT_IF=""
+VM_NAME=ubuntu
+RAM=4096
+VCPUS=2
+DISK_SIZE_GB=40
+ISO=""
+CLOUD_INIT=0
+CI_USER=ubuntu
+CI_PASS=""
+CI_SSH_KEY_FILE=""
+
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    --force) FORCE=1; shift;;
+    --fresh) FORCE=1; FRESH=1; shift;;
+  --bridge) BRIDGE="$2"; shift 2;;
+  --direct-if) DIRECT_IF="$2"; shift 2;;
+    --name) VM_NAME="$2"; shift 2;;
+    --ram) RAM="$2"; shift 2;;
+    --vcpus) VCPUS="$2"; shift 2;;
+    --disk) DISK_SIZE_GB="$2"; shift 2;;
+    --iso) ISO="$2"; shift 2;;
+    --cloud-init) CLOUD_INIT=1; shift;;
+    --ci-user) CI_USER="$2"; shift 2;;
+    --ci-pass) CI_PASS="$2"; shift 2;;
+    --ci-ssh-key) CI_SSH_KEY_FILE="$2"; shift 2;;
+    -h|--help) usage; exit 0;;
+    *) echo "Unknown arg: $1" >&2; usage; exit 1;;
+  esac
+done
+
+DISK="/var/lib/libvirt/images/${VM_NAME}.qcow2"
+NVRAM="/var/lib/libvirt/qemu/nvram/${VM_NAME}_VARS.fd"
+CODE_FW="/etc/ovmf/OVMF_CODE.ms.fd"
+VARS_TMPL="/etc/ovmf/OVMF_VARS.ms.fd"
+
+if [[ -n "$DIRECT_IF" && -n "$BRIDGE" ]]; then
+  echo "Use either --bridge or --direct-if, not both" >&2; exit 1
+fi
+if [[ -n "$DIRECT_IF" ]]; then
+  [[ -d /sys/class/net/$DIRECT_IF ]] || { echo "Interface $DIRECT_IF not found" >&2; exit 1; }
+else
+  if [[ ! -d /sys/class/net/$BRIDGE ]]; then
+    echo "Bridge $BRIDGE not found (interface /sys/class/net/$BRIDGE missing). Create it or use --direct-if." >&2; exit 1
+  fi
+fi
+
+if [[ -n "$ISO" && ! -f "$ISO" ]]; then
+  echo "ISO not found: $ISO" >&2; exit 1
+fi
+for f in "$CODE_FW" "$VARS_TMPL"; do
+  [[ -f $f ]] || { echo "Missing firmware file: $f" >&2; exit 1; }
+done
+
+sudo install -d -m0755 /var/lib/libvirt/images
+sudo install -d -m0750 /var/lib/libvirt/qemu/nvram || true
+
+if (( FRESH )); then
+  echo "Fresh: removing disk & NVRAM" >&2
+  sudo rm -f "$DISK" "$NVRAM" || true
+fi
+
+if [[ ! -f "$DISK" ]]; then
+  echo "Creating disk $DISK (${DISK_SIZE_GB}G)" >&2
+  sudo qemu-img create -f qcow2 "$DISK" "${DISK_SIZE_GB}G" >/dev/null
+fi
+
+# Optional cloud-init seed generation
+SEED_DISK=""
+if (( CLOUD_INIT )); then
+  CI_DIR=$(mktemp -d /tmp/${VM_NAME}-seed-XXXX)
+  USERDATA="$CI_DIR/user-data"
+  META="$CI_DIR/meta-data"
+  SSH_KEY=""
+  if [[ -n "$CI_SSH_KEY_FILE" ]]; then
+    [[ -f "$CI_SSH_KEY_FILE" ]] || { echo "SSH key file not found: $CI_SSH_KEY_FILE" >&2; exit 1; }
+    SSH_KEY=$(<"$CI_SSH_KEY_FILE")
+  fi
+  if [[ -n "$CI_PASS" ]]; then
+    HASHED=$(openssl passwd -6 "$CI_PASS")
+  else
+    HASHED=""
+  fi
+  cat > "$USERDATA" <<UD
+#cloud-config
+users:
+  - name: $CI_USER
+    sudo: ALL=(ALL) NOPASSWD:ALL
+    shell: /bin/bash
+    lock_passwd: false
+    $( [[ -n $HASHED ]] && echo "passwd: $HASHED" )
+    $( [[ -n $SSH_KEY ]] && echo "ssh_authorized_keys:" )
+    $( [[ -n $SSH_KEY ]] && echo "      - $SSH_KEY" )
+chpasswd:
+  expire: false
+package_update: true
+package_upgrade: true
+timezone: UTC
+write_files:
+  - path: /etc/motd
+    content: |
+      Ubuntu VM provisioned via ubuntu-onliner
+runcmd:
+  - [ sh, -c, 'echo cloud-init complete' ]
+UD
+  echo "instance-id: $(uuidgen)" > "$META"
+  echo "local-hostname: $VM_NAME" >> "$META"
+  SEED_ISO="/var/lib/libvirt/images/${VM_NAME}-seed.iso"
+  genisoimage -quiet -output "$SEED_ISO" -volid cidata -joliet -rock "$USERDATA" "$META"
+  SEED_DISK="$SEED_ISO"
+fi
+
+if sudo virsh -c qemu:///system dominfo "$VM_NAME" &>/dev/null; then
+  if (( FORCE )); then
+    echo "Undefining existing domain $VM_NAME" >&2
+    sudo virsh -c qemu:///system destroy "$VM_NAME" &>/dev/null || true
+    sudo virsh -c qemu:///system undefine "$VM_NAME" --nvram || sudo virsh -c qemu:///system undefine "$VM_NAME" || true
+  else
+    echo "Domain $VM_NAME exists; starting." >&2
+    sudo virsh -c qemu:///system start "$VM_NAME" && exit 0
+    echo "Start failed." >&2; exit 1
+  fi
+fi
+
+TMP_XML=$(mktemp /tmp/${VM_NAME}-XXXX.xml)
+# Build interface XML snippet separately to avoid heredoc-in-substitution syntax issues
+if [[ -n $DIRECT_IF ]]; then
+  IFACE_XML="    <interface type='direct'>\n      <source dev='$DIRECT_IF' mode='bridge'/>\n      <model type='virtio'/>\n    </interface>"
+else
+  IFACE_XML="    <interface type='bridge'>\n      <source bridge='$BRIDGE'/>\n      <model type='virtio'/>\n    </interface>"
+fi
+cat > "$TMP_XML" <<EOF
+<domain type='kvm'>
+  <name>$VM_NAME</name>
+  <memory unit='MiB'>$RAM</memory>
+  <currentMemory unit='MiB'>$RAM</currentMemory>
+  <vcpu placement='static'>$VCPUS</vcpu>
+  <cpu mode='host-passthrough'>
+    <topology sockets='1' cores='$VCPUS' threads='1'/>
+  </cpu>
+  <os>
+    <type arch='x86_64' machine='pc-q35-8.2'>hvm</type>
+    <loader readonly='yes' type='pflash' format='raw'>$CODE_FW</loader>
+    <nvram template='$VARS_TMPL'>$NVRAM</nvram>
+  </os>
+  <features>
+    <acpi/><apic/>
+    <smm state='on'/>
+  </features>
+  <clock offset='utc'/>
+  <on_poweroff>destroy</on_poweroff>
+  <on_reboot>restart</on_reboot>
+  <on_crash>restart</on_crash>
+  <devices>
+    <emulator>/run/libvirt/nix-emulators/qemu-system-x86_64</emulator>
+    <disk type='file' device='disk'>
+      <driver name='qemu' type='qcow2' cache='none'/>
+      <source file='$DISK'/>
+      <target dev='vda' bus='virtio'/>
+      <boot order='1'/>
+    </disk>
+EOF
+
+if [[ -n $ISO ]]; then
+  cat >> "$TMP_XML" <<EOF
+    <disk type='file' device='cdrom'>
+      <driver name='qemu' type='raw'/>
+      <source file='$ISO'/>
+      <target dev='sda' bus='sata'/>
+      <readonly/>
+      <boot order='2'/>
+    </disk>
+EOF
+fi
+
+if [[ -n $SEED_DISK ]]; then
+  cat >> "$TMP_XML" <<EOF
+    <disk type='file' device='cdrom'>
+      <driver name='qemu' type='raw'/>
+      <source file='$SEED_DISK'/>
+      <target dev='sdb' bus='sata'/>
+      <readonly/>
+    </disk>
+EOF
+fi
+
+cat >> "$TMP_XML" <<EOF
+${IFACE_XML}
+    <graphics type='spice' autoport='yes'><listen type='none'/></graphics>
+    <video><model type='virtio'/></video>
+    <rng model='virtio'><backend model='random'>/dev/urandom</backend></rng>
+  </devices>
+</domain>
+EOF
+
+echo "Defining $VM_NAME via $TMP_XML" >&2
+sudo virsh -c qemu:///system define "$TMP_XML" >/dev/null
+echo "Starting $VM_NAME" >&2
+sudo virsh -c qemu:///system start "$VM_NAME"
+echo "VM $VM_NAME started. Connect with: virt-viewer --connect qemu:///system $VM_NAME" >&2
+if (( CLOUD_INIT )); then
+  echo "Cloud-init seed used: $SEED_DISK" >&2
+fi
