@@ -255,7 +255,7 @@ in {
 
     # additional packages from separate module
     kdePackages.dolphin
-    kio-extras
+    kdePackages.kio-extras
     kdePackages.kwallet
     kdePackages.kwalletmanager
     samba
