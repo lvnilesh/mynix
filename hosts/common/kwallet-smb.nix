@@ -26,5 +26,5 @@
   # security.pam.services.gdm-launch-environment.kwallet.enable = true;
 
   # Optionally let kwallet auto-migrate to new format
-  programs.kde.enable = lib.mkDefault true; # provides KDE runtime bits needed by wallet
+  # programs.kde.enable = lib.mkDefault true; # provides KDE runtime bits needed by wallet
 }
