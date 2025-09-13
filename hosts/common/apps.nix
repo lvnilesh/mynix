@@ -226,7 +226,8 @@ in {
     hyprpaper
     mako
     pavucontrol
-    kdePackages.dolphin
+    # Switched from Dolphin to Nautilus for GNOME-friendly file management
+    nautilus
     wofi
     # Removed xdg-desktop-portal-hyprland (added via xdg.portal.extraPortals)
     wlsunset
@@ -253,12 +254,16 @@ in {
     # Balena CLI (for balenaCloud / openBalena)
     balena-cli
 
-    # additional packages from separate module
-    kdePackages.dolphin
-    kdePackages.kio-extras
-    kdePackages.kwallet
-    kdePackages.kwalletmanager
     samba
     cifs-utils
+    evince
+    xournalpp
+    # Image viewer: use Eye of GNOME (eog) instead of Gwenview
+    eog
+    mpv
+    audacity
+    file-roller
+    gedit
+    localsearch # provides unified local search (replaces tracker-miners / tracker3 CLI)
   ];
 }

@@ -1,6 +1,7 @@
 {
   config,
   pkgs,
+  lib,
   ...
 }: {
   imports = [
@@ -28,46 +29,19 @@
   gtk = {
     enable = true;
     theme = {
-      name = "Nordic-Darker"; # try Nordic-Dark or Nordic if you prefer
-      package = pkgs.nordic; # assumes nixpkgs attribute 'nordic'
+      name = "Adwaita"; # built into GTK/libadwaita; no package needed (avoids missing gtk-4.0 css warning)
     };
     iconTheme = {
-      name = "Papirus-Dark"; # consistent icon set; can switch to Nordzy icon theme if desired
+      name = "Papirus-Dark";
       package = pkgs.papirus-icon-theme;
     };
   };
-
-  # Detect Kvantum availability; if absent, fall back to Adwaita-Dark for Qt
-  qt = let
-    kvantumPkg = pkgs.qt6Packages.kvantum-qt6 or null;
-  in {
-    enable = true;
-    platformTheme = {name = "qtct";};
-    style =
-      if kvantumPkg != null
-      then {
-        name = "kvantum";
-        package = kvantumPkg;
-      }
-      else {
-        name = "Adwaita-Dark";
-        package = pkgs.adwaita-qt;
-      };
-  };
-
-  # Kvantum configuration to select Nordic theme for Qt apps
-  home.file.".config/Kvantum/kvantum.kvconfig".text = ''
-    [General]
-    theme=Nordic-Darker
-  '';
 
   home.packages = with pkgs; [
     kitty
     vscode
     google-chrome
     papirus-icon-theme
-    nordic
-    (pkgs.qt6Packages.kvantum-qt6 or pkgs.adwaita-qt)
     resilio-sync
   ];
 
@@ -145,6 +119,7 @@
     enable = true;
     shellAliases = {
       g = "git"; # enables `g st` etc. using defined git aliases
+      open = "xdg-open"; # quick opener alias
     };
   };
 
@@ -222,6 +197,61 @@
     };
   };
 
+  # Removed custom LocalSearch user services: upstream CLI no longer exposes
+  # 'store' or 'miner' subcommands directly. We rely on the packaged
+  # localsearch-3.service (Tracker daemon) which already runs.
+  # Provide an init helper to ensure XDG directories are explicitly added
+  # (idempotent) in minimal sessions where autostart rules may not run.
+  systemd.user.services.localsearch-init = {
+    Unit = {
+      Description = "LocalSearch init: add XDG dirs and start miners";
+      After = ["graphical-session.target"]; # run after login session
+    };
+    Service = {
+      Type = "oneshot";
+      ExecStart = pkgs.writeShellScript "localsearch-init.sh" ''
+        set -euo pipefail
+        BIN="${pkgs.localsearch}/bin/localsearch"
+        # Add typical directories (ignore errors if already present)
+        for d in "$HOME/Documents" "$HOME/Downloads" "$HOME/Pictures" "$HOME/Videos" "$HOME/Music"; do
+          [ -d "$d" ] || continue
+          $BIN index --add --recursive "$d" 2>/dev/null || true
+        done
+        # Start miners (safe if already running)
+        $BIN daemon --start || true
+      '';
+      RemainAfterExit = true;
+    };
+    Install = {WantedBy = ["default.target"];};
+  };
+
+  # Provide default GTK bookmarks file to silence Nautilus warning.
+  home.file.".config/gtk-3.0/bookmarks".text = ''
+    file:///home/cloudgenius/Documents Documents
+    file:///home/cloudgenius/Downloads Downloads
+    file:///home/cloudgenius/Pictures Pictures
+    file:///home/cloudgenius/Videos Videos
+  '';
+
+  # Home Manager XDG user dirs (system module unavailable on this channel)
+  xdg.userDirs = {
+    enable = true;
+    createDirectories = true;
+    desktop = "$HOME"; # avoid separate Desktop dir
+    documents = "$HOME/Documents";
+    download = "$HOME/Downloads";
+    music = "$HOME/Music";
+    pictures = "$HOME/Pictures";
+    publicShare = "$HOME";
+    templates = "$HOME";
+    videos = "$HOME/Videos";
+  };
+
+  # Enforce Adwaita dark for GTK apps even if environment incomplete (Hyprland session)
+  home.sessionVariables = {
+    GTK_THEME = "Adwaita:dark"; # request dark variant properly
+  };
+
   # VSCode Nord Dark theme configuration
   programs.vscode = {
     enable = true;
@@ -242,7 +272,6 @@
           "window.titleBarStyle" = "custom";
           "terminal.integrated.fontFamily" = "JetBrainsMono Nerd Font";
           "terminal.integrated.minimumContrastRatio" = 4.2;
-          # Apply Nord-style Material Icon Theme tweaks
           "workbench.iconTheme" = "material-icon-theme";
           "material-icon-theme.saturation" = 0;
           "material-icon-theme.folders.color" = "#81A1C1";
@@ -253,8 +282,72 @@
           "files.insertFinalNewline" = true;
           "explorer.compactFolders" = false;
           "git.confirmSync" = false;
+          "workbench.editor.tabCloseButton" = "left";
+          "workbench.editor.tabActionLocation" = "left";
         };
       };
     };
   };
+
+  xdg.mimeApps = {
+    enable = true;
+    defaultApplications = {
+      # Documents
+      # Evince correct desktop id is org.gnome.Evince.desktop (was evince.desktop)
+      "application/pdf" = ["org.gnome.Evince.desktop"];
+      "application/epub+zip" = ["org.gnome.Evince.desktop"];
+      # Images
+      # Images now handled by Eye of GNOME (eog)
+      "image/jpeg" = ["org.gnome.eog.desktop"];
+      "image/png" = ["org.gnome.eog.desktop"];
+      "image/webp" = ["org.gnome.eog.desktop"];
+      "image/gif" = ["org.gnome.eog.desktop"];
+      "image/tiff" = ["org.gnome.eog.desktop"];
+      "image/svg+xml" = ["org.gnome.eog.desktop"];
+      # Video
+      "video/mp4" = ["mpv.desktop"];
+      "video/x-matroska" = ["mpv.desktop"];
+      "video/x-msvideo" = ["mpv.desktop"];
+      "video/webm" = ["mpv.desktop"];
+      "video/quicktime" = ["mpv.desktop"];
+      # Audio
+      "audio/mpeg" = ["vlc.desktop"];
+      "audio/flac" = ["vlc.desktop"];
+      "audio/x-wav" = ["vlc.desktop"];
+      "audio/ogg" = ["vlc.desktop"];
+      # Text / code now default to gedit
+      "text/plain" = ["org.gnome.gedit.desktop"];
+      "text/markdown" = ["org.gnome.gedit.desktop"];
+      "application/json" = ["org.gnome.gedit.desktop"];
+      "application/x-yaml" = ["org.gnome.gedit.desktop"];
+      "application/x-yml" = ["org.gnome.gedit.desktop"];
+      "text/css" = ["org.gnome.gedit.desktop"];
+      "application/xml" = ["org.gnome.gedit.desktop"];
+      "text/html" = ["firefox.desktop"];
+      "application/xhtml+xml" = ["firefox.desktop"];
+      # Archives
+      "application/zip" = ["org.gnome.FileRoller.desktop"];
+      "application/x-xz" = ["org.gnome.FileRoller.desktop"];
+      "application/x-bzip2" = ["org.gnome.FileRoller.desktop"];
+      "application/gzip" = ["org.gnome.FileRoller.desktop"];
+      "application/x-tar" = ["org.gnome.FileRoller.desktop"];
+      # Folders
+      "inode/directory" = ["org.gnome.Nautilus.desktop"];
+      # Generic fallback
+      "application/octet-stream" = ["org.gnome.Nautilus.desktop"];
+    };
+  };
+
+  # Remove ad-hoc user override files that can fight with declarative defaults under Hyprland + non-Plasma session.
+  home.activation.cleanMimeOverrides = lib.hm.dag.entryAfter ["writeBoundary"] ''
+        echo "[activation] Cleaning conflicting mimeapps overrides" >&2
+        rm -f "$HOME/.local/share/applications/mimeapps.list" "$HOME/.config/kde-mimeapps.list"
+        # Clear cache so xdg-mime re-evaluates
+        rm -f "$HOME/.cache/mimeinfo.cache"
+      # Remove obsolete KDE configs
+      rm -f "$HOME/.config/dolphinrc" "$HOME/.config/katerc" "$HOME/.config/gwenviewrc" "$HOME/.config/arkrc" || true
+      rm -rf "$HOME/.cache/ksycoca6"* "$HOME/.cache/ksycoca5"* || true
+    # Purge Kvantum remnants
+    rm -rf "$HOME/.config/Kvantum" || true
+  '';
 }

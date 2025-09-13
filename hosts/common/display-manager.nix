@@ -66,9 +66,4 @@
     # Hyprland's package already brings the portal/unit. Keep GTK for GTK apps fallback.
     extraPortals = [pkgs.xdg-desktop-portal-gtk];
   };
-
-  security.pam.services = {
-    login.kwallet.enable = lib.mkDefault true;
-    gdm-password.kwallet.enable = lib.mkDefault true;
-  };
 }

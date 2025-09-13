@@ -25,7 +25,6 @@
     ./common/i2c-dev.nix
     ./common/resilio-sync.nix
     ./common/smb-mounts.nix
-    ./common/kwallet-smb.nix
   ];
 
   services.printing.enable = true;
@@ -49,6 +48,8 @@
 
   nixpkgs.config.allowUnfree = true;
   nix.settings.experimental-features = ["nix-command" "flakes"];
+
+  services.gnome.localsearch.enable = true;
 
   system.stateVersion = "25.05";
   # system.stateVersion = "25.11";
