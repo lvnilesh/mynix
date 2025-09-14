@@ -28,6 +28,18 @@
       };
     in {
       packages.default = pkgs.hello;
+      devShells.default = pkgs.mkShell {
+        name = "media-tools";
+        packages = with pkgs; [
+          ffmpeg
+          mediainfo
+          jq
+          bashInteractive
+        ];
+        shellHook = ''
+          echo "Media tools shell: ffmpeg $(ffmpeg -version | head -n1)" || true
+        '';
+      };
     })
     // {
       nixosConfigurations = {

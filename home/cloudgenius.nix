@@ -43,6 +43,8 @@
     google-chrome
     papirus-icon-theme
     resilio-sync
+    yt-dlp
+    prismlauncher
   ];
 
   programs.git = {
@@ -120,6 +122,7 @@
     shellAliases = {
       g = "git"; # enables `g st` etc. using defined git aliases
       open = "xdg-open"; # quick opener alias
+      whatsapp = "google-chrome-stable --ozone-platform-hint=wayland --enable-features=UseOzonePlatform --app=https://web.whatsapp.com/";
     };
   };
 
@@ -287,6 +290,16 @@
         };
       };
     };
+  };
+
+  # Desktop entry for WhatsApp (Chrome app mode) so it shows as its own app in launchers
+  xdg.desktopEntries.whatsapp = {
+    name = "WhatsApp";
+    genericName = "WhatsApp";
+    comment = "WhatsApp Web (Chrome App)";
+    exec = "google-chrome-stable --ozone-platform-hint=wayland --enable-features=UseOzonePlatform --app=https://web.whatsapp.com/";
+    categories = ["Network" "InstantMessaging"];
+    terminal = false;
   };
 
   xdg.mimeApps = {
