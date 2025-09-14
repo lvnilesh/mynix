@@ -1,4 +1,4 @@
- bash ./w11-onliner --fresh --disk-bus virtio --drivers-iso /home/cloudgenius/Downloads/virtio-win-0.1.271.iso
+bash ./w11-onliner --fresh --disk-bus virtio --drivers-iso /home/cloudgenius/Downloads/virtio-win-0.1.271.iso
 
 
 
