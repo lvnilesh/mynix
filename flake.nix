@@ -35,6 +35,8 @@
           mediainfo
           jq
           bashInteractive
+          tcpdump
+          websocat
         ];
         shellHook = ''
           echo "Media tools shell: ffmpeg $(ffmpeg -version | head -n1)" || true

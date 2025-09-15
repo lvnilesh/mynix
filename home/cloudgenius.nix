@@ -45,6 +45,7 @@
     resilio-sync
     yt-dlp
     prismlauncher
+    nerd-fonts.jetbrains-mono
   ];
 
   programs.git = {
@@ -197,6 +198,11 @@
     enable = true;
     settings = {
       confirm_os_window_close = 0;
+      # Use a patched Nerd Font so starship/Powerline glyphs render correctly
+      # NOTE: fontconfig reports the NL (no ligatures) mono family as present: "JetBrainsMonoNL Nerd Font Mono"
+      # We standardize on that to avoid fallback mismatches and boxes for Nerd glyphs.
+      font_family = "JetBrainsMonoNL Nerd Font Mono";
+      font_size = 12.0;
     };
   };
 
@@ -273,7 +279,8 @@
           "editor.bracketPairColorization.enabled" = true;
           "editor.semanticHighlighting.enabled" = true;
           "window.titleBarStyle" = "custom";
-          "terminal.integrated.fontFamily" = "JetBrainsMono Nerd Font";
+          # Prefer the mono patched variant for terminals so glyphs render correctly
+          "terminal.integrated.fontFamily" = "JetBrainsMono Nerd Font Mono, monospace";
           "terminal.integrated.minimumContrastRatio" = 4.2;
           "workbench.iconTheme" = "material-icon-theme";
           "material-icon-theme.saturation" = 0;

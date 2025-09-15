@@ -4,21 +4,21 @@
  */
 
 * {
-  font-family: "JetBrainsMono Nerd Font", "FiraCode Nerd Font", "FontAwesome", sans-serif;
+  font-family: "JetBrainsMono Nerd Font", "FontAwesome", sans-serif;
   font-size: 15px;
   min-height: 20px;
-  border-radius: 1.0rem; 
+  border-radius: 1.0rem;
 }
 
 /* #custom-caffeine {
-  font-family: "Noto Color Emoji", "JetBrainsMono Nerd Font", "FiraCode Nerd Font", "FontAwesome", sans-serif;
+  font-family: "Noto Color Emoji", "JetBrainsMono Nerd Font", "FontAwesome", sans-serif;
   font-size: 20px;
 } */
 
 window#waybar {
   background: rgba(35, 33, 54, 0.8); /* Use rgba for transparency */
   color: #e0def4;
-  border-radius: 1.0rem; 
+  border-radius: 1.0rem;
   border: 1.5px solid #393552;
   box-shadow: 0 4px 24px 0 #000a;
 }
@@ -43,7 +43,7 @@ window#waybar {
   background: #ea9a97;
   color: #232136;
 }
-/* 
+/*
 #clock {
   background: #ea9a97;
   color: #232136;
@@ -102,23 +102,23 @@ window#waybar {
 .modules-right > * {
   margin: 0 30px; /* Increased horizontal spacing */
   padding: 0 10px;
-  border-radius: 1.0rem; 
+  border-radius: 1.0rem;
   font-weight: 600;
 }
 
 #network {
   margin-left: 40px;
-  margin-right: 40px;  
+  margin-right: 40px;
 }
 
-.modules-center { 
-  margin: 2px; 
-  padding: 2px; 
-  padding-left: 10px; 
-  padding-right: 10px; 
-  border-radius: 1.0rem; 
-  transition: none; 
-  color: #181c27; 
+.modules-center {
+  margin: 2px;
+  padding: 2px;
+  padding-left: 10px;
+  padding-right: 10px;
+  border-radius: 1.0rem;
+  transition: none;
+  color: #181c27;
   /* background-color: #df0107; */
   background-color:  #ea9a97;
 }
