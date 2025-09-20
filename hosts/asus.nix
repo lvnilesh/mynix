@@ -25,6 +25,7 @@
     ./common/i2c-dev.nix
     ./common/resilio-sync.nix
     ./common/smb-mounts.nix
+    ./common/wake-on-lan.nix
   ];
 
   services.printing.enable = true;

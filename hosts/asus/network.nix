@@ -9,4 +9,7 @@
   networking.useDHCP = lib.mkDefault true;
   # networking.interfaces.eno1.useDHCP = lib.mkDefault true;
   # networking.interfaces.wlp0s20f3.useDHCP = lib.mkDefault true;
+
+  # Enable Wake-on-LAN for ethernet interface
+  networking.interfaces.eno1.wakeOnLan.enable = true;
 }
