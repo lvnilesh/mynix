@@ -156,12 +156,16 @@ in {
     nmap
     mtr # A network diagnostic tool
     iperf3
+    tcpdump # packet capture and analysis
+    iw # configure and show wireless devices
+    iproute2 # modern replacement providing ip, ss, bridge, tc, etc.
     dnsutils # `dig` + `nslookup`
     ldns # replacement of `dig`, it provide the command `drill`
     aria2 # A lightweight multi-protocol & multi-source command-line download utility
     socat # replacement of openbsd-netcat
     nmap # A utility for network discovery and security auditing
     ipcalc # it is a calculator for the IPv4/v6 addresses
+    wakeonlan # send Wake-on-LAN magic packets
 
     # misc
     cowsay
