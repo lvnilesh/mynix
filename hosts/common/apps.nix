@@ -185,6 +185,7 @@ in {
 
     # productivity
     glow # markdown previewer in terminal
+    rustdesk # remote desktop client/server (GUI)
 
     btop # replacement of htop/nmon
     iotop # io monitoring
