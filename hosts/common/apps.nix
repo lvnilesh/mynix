@@ -83,6 +83,35 @@
       })
     ];
   };
+
+  # RustDesk X11 wrapper: force X11 backend if Wayland causes input issues
+  rustdeskX11 = pkgs.symlinkJoin {
+    name = "rustdesk-x11";
+    paths = [
+      (pkgs.writeShellScriptBin "rustdesk-x11" ''
+        #!${pkgs.bash}/bin/bash
+        # Force RustDesk to use X11 backend when running under Wayland (Hyprland)
+        # This can resolve certain keyboard/input or clipboard edge cases.
+        unset WAYLAND_DISPLAY # discourage toolkits from picking Wayland
+        export WINIT_UNIX_BACKEND=x11
+        export QT_QPA_PLATFORM=xcb
+        # Optional: disable Wayland-specific env that might linger
+        export XDG_SESSION_TYPE=x11
+        exec ${pkgs.rustdesk}/bin/rustdesk "$@"
+      '')
+      (pkgs.makeDesktopItem {
+        name = "rustdesk-x11";
+        desktopName = "RustDesk (X11)";
+        genericName = "Remote Desktop";
+        comment = "RustDesk forced to X11 backend";
+        categories = ["Network" "RemoteAccess" "Utility"];
+        exec = "rustdesk-x11";
+        icon = "rustdesk"; # Provided by package
+        terminal = false;
+        type = "Application";
+      })
+    ];
+  };
 in {
   # List packages installed in system profile. To search, run:
   # $ nix search wget
@@ -186,6 +215,7 @@ in {
     # productivity
     glow # markdown previewer in terminal
     rustdesk # remote desktop client/server (GUI)
+    rustdeskX11 # wrapper forcing X11 backend
 
     btop # replacement of htop/nmon
     iotop # io monitoring
