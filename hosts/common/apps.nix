@@ -216,6 +216,7 @@ in {
     glow # markdown previewer in terminal
     rustdesk # remote desktop client/server (GUI)
     rustdeskX11 # wrapper forcing X11 backend
+    thunderbird # full-featured email + calendar (Lightning), OpenPGP built-in
 
     btop # replacement of htop/nmon
     iotop # io monitoring

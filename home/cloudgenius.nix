@@ -423,4 +423,18 @@
     # Purge Kvantum remnants
     rm -rf "$HOME/.config/Kvantum" || true
   '';
+
+  # Thunderbird with Google Calendar provider (Lightning calendar built-in upstream).
+  programs.thunderbird = {
+    enable = true;
+    profiles.default = {
+      isDefault = true;
+      settings = {
+        # Example preference: show week numbers in calendar
+        "calendar.view.showWeekNumber" = true;
+      };
+      # Google Calendar provider extension not packaged in current nixpkgs set.
+      # Install manually via: Add-ons Manager -> Extensions -> search "Provider for Google Calendar".
+    };
+  };
 }
