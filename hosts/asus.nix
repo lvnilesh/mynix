@@ -26,6 +26,10 @@
     ./common/resilio-sync.nix
     ./common/smb-mounts.nix
     ./common/wake-on-lan.nix
+    ./common/nix-ld.nix
+    ./common/serial-perms.nix
+    ./common/brother-printer.nix
+    ./common/rgb.nix
   ];
 
   services.printing.enable = true;
@@ -44,6 +48,8 @@
       "input"
       "kvm"
       "libvirt"
+      "dialout" # serial devices
+      "uucp" # alternative serial device group on some distros
     ];
   };
 

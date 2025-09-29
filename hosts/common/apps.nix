@@ -132,6 +132,7 @@ in {
     bat
     neofetch
     fastfetch
+    dmidecode
     # albert
     (google-cloud-sdk.withExtraComponents [
       google-cloud-sdk.components.gke-gcloud-auth-plugin
@@ -172,6 +173,7 @@ in {
     # Development tools
     git
     gh
+    platformio-core # embedded / microcontroller development (pio)
 
     meslo-lgs-nf # Standalone package
     nerd-fonts.droid-sans-mono
@@ -195,6 +197,7 @@ in {
     nmap # A utility for network discovery and security auditing
     ipcalc # it is a calculator for the IPv4/v6 addresses
     wakeonlan # send Wake-on-LAN magic packets
+    arp-scan # ARP scanning and fingerprinting tool
 
     # misc
     cowsay
@@ -301,5 +304,14 @@ in {
     file-roller
     gedit
     localsearch # provides unified local search (replaces tracker-miners / tracker3 CLI)
+
+    # RGB lighting control
+    openrgb
+    openrgb-with-all-plugins
+
+    # Audio visualization and effects
+    # cava # already listed above
+    pulseeffects-legacy
+    easyeffects
   ];
 }
