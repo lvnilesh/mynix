@@ -244,6 +244,9 @@ in {
     ethtool
     pciutils # lspci
     usbutils # lsusb
+    efibootmgr # EFI boot manager utility
+    mokutil # MOK (Machine Owner Key) management for Secure Boot
+    efivar # EFI variable manipulation tool
 
     blueman
     # blueman-utils

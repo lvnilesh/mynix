@@ -11,6 +11,11 @@
       url = "github:hyprwm/hyprland";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+
+    lanzaboote = {
+      url = "github:nix-community/lanzaboote/747b7912f49e2885090c83364d88cf853a020ac1";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
   };
 
   outputs = {
@@ -19,6 +24,7 @@
     home-manager,
     flake-utils,
     hyprland,
+    lanzaboote,
     ...
   } @ inputs:
     flake-utils.lib.eachDefaultSystem (system: let
@@ -49,6 +55,7 @@
           system = "x86_64-linux";
           modules = [
             ./hosts/asus.nix
+            lanzaboote.nixosModules.lanzaboote
             home-manager.nixosModules.home-manager
             {
               home-manager.useGlobalPkgs = true;
@@ -65,6 +72,7 @@
           system = "x86_64-linux";
           modules = [
             ./hosts/venus.nix
+            lanzaboote.nixosModules.lanzaboote
             home-manager.nixosModules.home-manager
             {
               home-manager.useGlobalPkgs = true;
