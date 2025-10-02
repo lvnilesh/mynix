@@ -347,6 +347,11 @@
           "git.confirmSync" = false;
           "workbench.editor.tabCloseButton" = "left";
           "workbench.editor.tabActionLocation" = "left";
+          # Disable update checks
+          "update.mode" = "none";
+          "update.showReleaseNotes" = false;
+          "extensions.autoCheckUpdates" = false;
+          "extensions.autoUpdate" = false;
         };
       };
     };

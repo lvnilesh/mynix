@@ -169,7 +169,7 @@ in {
     # Terminal utilities
     fd
     tldr
-
+    bc
     # Development tools
     git
     gh
@@ -187,6 +187,7 @@ in {
     nmap
     mtr # A network diagnostic tool
     iperf3
+    speedtest-cli # Internet speed test
     tcpdump # packet capture and analysis
     iw # configure and show wireless devices
     iproute2 # modern replacement providing ip, ss, bridge, tc, etc.
