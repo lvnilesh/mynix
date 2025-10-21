@@ -221,6 +221,7 @@ in {
     rustdesk # remote desktop client/server (GUI)
     rustdeskX11 # wrapper forcing X11 backend
     thunderbird # full-featured email + calendar (Lightning), OpenPGP built-in
+    localsend # cross-platform file sharing via local network
 
     btop # replacement of htop/nmon
     iotop # io monitoring
@@ -244,7 +245,9 @@ in {
     ethtool
     pciutils # lspci
     usbutils # lsusb
-
+    efibootmgr # EFI boot manager utility
+    mokutil # MOK (Machine Owner Key) management for Secure Boot
+    efivar # EFI variable manipulation tool
     blueman
     # blueman-utils
 
