@@ -93,7 +93,7 @@
 
   programs.git = {
     enable = true;
-    aliases = {
+    settings.alias = {
       # Quality-of-life navigation / inspection
       st = "status -sb"; # short status
       s = "status";

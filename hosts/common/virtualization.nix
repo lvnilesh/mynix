@@ -7,10 +7,12 @@
     libvirtd = {
       enable = true;
       qemu = {
-        ovmf = {
-          enable = true;
-          packages = [pkgs.OVMFFull.fd]; # gives *secboot* firmware
-        };
+        # OVMF images are now available by default with QEMU (no need to specify packages)
+        # Legacy configuration (deprecated in NixOS 24.11+):
+        # ovmf = {
+        #   enable = true;
+        #   packages = [pkgs.OVMFFull.fd]; # gives *secboot* firmware
+        # };
         swtpm.enable = true;
       };
     };

@@ -3,6 +3,9 @@
   modulesPath,
   ...
 }: {
+  # Set system architecture
+  nixpkgs.hostPlatform = "x86_64-linux";
+
   imports = [
     (modulesPath + "/installer/scan/not-detected.nix")
     ./asus/compute.nix

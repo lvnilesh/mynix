@@ -1,0 +1,124 @@
+/*
+ * Beautiful Waybar style for Hyprland
+ * Modern, semi-transparent, with rounded corners and vibrant colors
+ */
+
+* {
+  font-family: "JetBrainsMono Nerd Font", "FontAwesome", sans-serif;
+  font-size: 15px;
+  min-height: 20px;
+  border-radius: 1.0rem;
+}
+
+/* #custom-caffeine {
+  font-family: "Noto Color Emoji", "JetBrainsMono Nerd Font", "FontAwesome", sans-serif;
+  font-size: 20px;
+} */
+
+window#waybar {
+  background: rgba(35, 33, 54, 0.8); /* Use rgba for transparency */
+  color: #e0def4;
+  border-radius: 1.0rem;
+  border: 1.5px solid #393552;
+  box-shadow: 0 4px 24px 0 #000a;
+}
+
+#workspaces button {
+  background: transparent;
+  color: #e0def4;
+  border: none;
+  padding: 0 10px;
+  margin: 0 2px;
+  transition: background 0.2s, color 0.2s;
+}
+#workspaces button.active {
+  background: #b072d1;
+  color: #232136;
+}
+#workspaces button.urgent {
+  background: #eb6f92;
+  color: #232136;
+}
+#workspaces button:hover {
+  background: #ea9a97;
+  color: #232136;
+}
+/*
+#clock {
+  background: #ea9a97;
+  color: #232136;
+  padding: 0 16px;
+  margin: 0 8px;
+} */
+
+#pulseaudio, #network, #battery, #tray {
+  background: #393552;
+  color: #e0def4;
+  padding: 0 12px;
+  margin: 0 4px;
+}
+#battery.charging {
+  color: #ea9a97;
+}
+#battery.critical {
+  color: #eb6f92;
+  animation: blink 1s steps(2, start) infinite;
+}
+@keyframes blink {
+  to {
+    opacity: 0;
+  }
+}
+
+#tray {
+  background: transparent;
+  margin-right: 8px;
+}
+
+#window {
+  background: transparent;
+  color: #e0def4;
+  font-weight: bold;
+  padding: 0 12px;
+  margin: 0 8px;
+}
+
+/* Caffeine custom module styling */
+#custom-caffeine.caffeine-on {
+  color: #ea9a97;
+  background: #232136;
+  font-weight: bold;
+}
+#custom-caffeine.caffeine-off {
+  color: #6e6a86;
+  background: #232136;
+  opacity: 0.5;
+}
+
+#custom-caffeine {
+  margin-left: 40px;
+}
+
+.modules-right > * {
+  margin: 0 30px; /* Increased horizontal spacing */
+  padding: 0 10px;
+  border-radius: 1.0rem;
+  font-weight: 600;
+}
+
+#network {
+  margin-left: 40px;
+  margin-right: 40px;
+}
+
+.modules-center {
+  margin: 2px;
+  padding: 2px;
+  padding-left: 10px;
+  padding-right: 10px;
+  border-radius: 1.0rem;
+  transition: none;
+  color: #181c27;
+  /* background-color: #df0107; */
+  background-color:  #ea9a97;
+}

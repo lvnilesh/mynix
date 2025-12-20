@@ -1,0 +1,258 @@
+/*
+ * Enhanced Waybar style for Hyprland
+ * Combines your existing style with omarchy features
+ * Modern, semi-transparent, with rounded corners and vibrant colors
+ */
+
+* {
+  font-family: "JetBrainsMono Nerd Font", "FontAwesome", sans-serif;
+  font-size: 14px;
+  min-height: 20px;
+  border-radius: 1.0rem;
+}
+
+window#waybar {
+  background: rgba(35, 33, 54, 0.85); /* Slightly more opaque for better readability */
+  color: #e0def4;
+  border-radius: 1.0rem;
+  border: 1.5px solid #393552;
+  box-shadow: 0 4px 24px 0 #000a;
+}
+
+/* Left modules spacing */
+.modules-left {
+  margin-left: 8px;
+}
+
+/* Right modules spacing */
+.modules-right {
+  margin-right: 8px;
+}
+
+/* Workspaces styling */
+#workspaces button {
+  background: rgba(136, 160, 193, 0.3);
+  color: #eceff4;
+  border: 1px solid rgba(136, 160, 193, 0.5);
+  padding: 2px 12px;
+  margin: 0 4px;
+  transition: all 0.2s ease;
+  min-width: 30px;
+  font-size: 15px;
+  font-weight: 600;
+}
+
+#workspaces button.active {
+  background: #b072d1;
+  color: #232136;
+  border: 1px solid #b072d1;
+  font-size: 18px;
+  font-weight: bold;
+}
+
+#workspaces button.urgent {
+  background: #eb6f92;
+  color: #232136;
+  border: 1px solid #eb6f92;
+  animation: blink 1s steps(2, start) infinite;
+}
+
+#workspaces button:hover {
+  background: #88c0d0;
+  color: #232136;
+  border: 1px solid #88c0d0;
+}
+
+#workspaces button.empty {
+  opacity: 0.5;
+  background: rgba(136, 160, 193, 0.15);
+  border: 1px solid rgba(136, 160, 193, 0.3);
+}
+
+/* Window title */
+#window {
+  background: transparent;
+  color: #e0def4;
+  font-weight: bold;
+  padding: 0 12px;
+  margin: 0 8px;
+}
+
+/* Center modules - Clock */
+.modules-center {
+  margin: 2px;
+  padding: 2px;
+  padding-left: 10px;
+  padding-right: 10px;
+  border-radius: 1.0rem;
+  transition: none;
+  color: #181c27;
+  background-color: #ea9a97;
+}
+
+#clock {
+  margin-left: 4px;
+}
+
+/* System monitoring modules */
+#cpu,
+#memory,
+#temperature,
+#battery,
+#bluetooth,
+#pulseaudio,
+#network {
+  background: #393552;
+  color: #e0def4;
+  padding: 0 12px;
+  margin: 0 4px;
+}
+
+/* CPU specific */
+#cpu {
+  min-width: 12px;
+  margin: 0 7.5px;
+}
+
+/* Memory specific */
+#memory {
+  color: #88c0d0;
+}
+
+/* Temperature specific */
+#temperature {
+  color: #81a1c1;
+}
+
+#temperature.critical {
+  color: #eb6f92;
+  animation: blink 1s steps(2, start) infinite;
+}
+
+/* Battery specific styling */
+#battery {
+  min-width: 12px;
+}
+
+#battery.charging {
+  color: #a3be8c;
+}
+
+#battery.warning:not(.charging) {
+  color: #ebcb8b;
+}
+
+#battery.critical:not(.charging) {
+  color: #eb6f92;
+  animation: blink 1s steps(2, start) infinite;
+}
+
+/* Bluetooth specific */
+#bluetooth {
+  margin-right: 17px;
+}
+
+#bluetooth.disabled,
+#bluetooth.off {
+  opacity: 0.5;
+}
+
+#bluetooth.connected {
+  color: #88c0d0;
+}
+
+/* Network specific */
+#network {
+  margin-right: 13px;
+}
+
+#network.disconnected {
+  color: #eb6f92;
+  opacity: 0.7;
+}
+
+/* Pulseaudio specific */
+#pulseaudio {
+  margin-right: 5px;
+}
+
+#pulseaudio.muted {
+  opacity: 0.5;
+  color: #eb6f92;
+}
+
+/* Tray expander group */
+#custom-expand-icon {
+  margin-right: 20px;
+  min-width: 12px;
+}
+
+#tray {
+  background: transparent;
+  margin-right: 8px;
+}
+
+.tray-item {
+  background: #393552;
+  margin: 0 2px;
+  padding: 0 6px;
+}
+
+/* Caffeine custom module */
+#custom-caffeine.caffeine-on {
+  color: #ea9a97;
+  background: #393552;
+  font-weight: bold;
+  padding: 0 12px;
+  margin: 0 4px;
+}
+
+#custom-caffeine.caffeine-off {
+  color: #6e6a86;
+  background: #393552;
+  opacity: 0.5;
+  padding: 0 12px;
+  margin: 0 4px;
+}
+
+/* Brightness module */
+#custom-brightness {
+  background: #393552;
+  color: #ebcb8b;
+  padding: 0 12px;
+  margin: 0 4px;
+}
+
+/* Music player module */
+#custom-music {
+  background: transparent;
+  color: #b48ead;
+  font-weight: 500;
+  padding: 0 12px;
+  margin: 0 8px;
+}
+
+/* Tooltip styling */
+tooltip {
+  background: rgba(35, 33, 54, 0.95);
+  border: 1px solid #393552;
+  border-radius: 8px;
+  padding: 8px;
+  color: #e0def4;
+}
+
+tooltip label {
+  color: #e0def4;
+}
+
+/* Animations */
+@keyframes blink {
+  to {
+    opacity: 0.5;
+  }
+}
+
+/* Hidden class for toggling */
+.hidden {
+  opacity: 0;
+}

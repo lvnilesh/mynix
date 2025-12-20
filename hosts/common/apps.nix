@@ -179,7 +179,7 @@ in {
     nerd-fonts.droid-sans-mono
     nerd-fonts.fira-code
     jetbrains-mono
-    noto-fonts-emoji
+    noto-fonts-color-emoji
     nerd-fonts._0xproto
     nerd-fonts.droid-sans-mono
 
