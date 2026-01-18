@@ -93,8 +93,8 @@
 
   programs.git = {
     enable = true;
-    userName = "Nilesh";
-    userEmail = "nilesh@cloudgeni.us";
+    settings.user.name = "Nilesh";
+    settings.user.email = "nilesh@cloudgeni.us";
 
     settings.alias = {
       # Quality-of-life navigation / inspection
