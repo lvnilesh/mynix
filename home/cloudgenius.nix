@@ -93,6 +93,9 @@
 
   programs.git = {
     enable = true;
+    userName = "Nilesh";
+    userEmail = "nilesh@cloudgeni.us";
+
     settings.alias = {
       # Quality-of-life navigation / inspection
       st = "status -sb"; # short status

@@ -16,3 +16,12 @@ hyprctl monitors
 xrandr --listmonitors
 wlrandr
 ```
+
+
+# Create this file manually  `/etc/samba/creds-cloudgenius`
+
+```
+username=cloudgenius
+password=password
+```
+and then run `./redo`
