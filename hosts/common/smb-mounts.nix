@@ -12,7 +12,7 @@
   # Define the SMB servers and a list of shares to attempt. If share list is empty, we will probe.
   servers = [
     "cosmos.cg.home.arpa"
-    "m1.cg.home.arpa"
+    "p1.cg.home.arpa"
     "truenas.cg.home.arpa"
   ];
   # Static list of common shares to try. Adjust as needed.
@@ -82,11 +82,12 @@ in {
   # Optional: periodic remount/refresh via timer
   systemd.timers.mount-smb-shares-refresh = {
     wantedBy = ["timers.target"];
-    partOf = ["mount-smb-shares.service"];
+
     timerConfig = {
       OnBootSec = "2m";
       OnUnitActiveSec = "30m";
       RandomizedDelaySec = "2m";
+      Unit = "mount-smb-shares.service";
     };
   };
 
