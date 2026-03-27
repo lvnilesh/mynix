@@ -36,7 +36,7 @@
   ];
 
   services.printing.enable = true;
-
+  services.tailscale.enable = true;
   security.sudo.wheelNeedsPassword = false;
 
   # System user definition (group membership here)
