@@ -37,6 +37,8 @@
 
   services.printing.enable = true;
 
+  security.sudo.wheelNeedsPassword = false;
+
   # System user definition (group membership here)
   users.users.cloudgenius = {
     isNormalUser = true;
