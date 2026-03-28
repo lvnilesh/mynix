@@ -10,7 +10,7 @@
     };
     Service = {
       Type = "simple";
-      ExecStart = "/run/current-system/sw/bin/systemd-inhibit --what=idle:sleep --why=WaybarCaffeine /run/current-system/sw/bin/bash -c 'while true; do sleep 60; done'";
+      ExecStart = "/run/current-system/sw/bin/systemd-inhibit --what=idle:sleep --why=WaybarCaffeine /run/current-system/sw/bin/bash -c 'while true; do /run/current-system/sw/bin/sleep 60; done'";
     };
     Install = {
       WantedBy = ["default.target"];

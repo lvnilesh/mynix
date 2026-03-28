@@ -46,8 +46,6 @@
   environment.variables = {
     __GLX_VENDOR_LIBRARY_NAME = "nvidia";
     LIBVA_DRIVER_NAME = "nvidia";
-    GBM_BACKEND = "nvidia-drm";
-    NVD_BACKEND = "direct";
     WLR_NO_HARDWARE_CURSORS = "1";
     # If crashes persist, try uncommenting next line to force GLES instead of Vulkan
     # WLR_RENDERER = "gles2";

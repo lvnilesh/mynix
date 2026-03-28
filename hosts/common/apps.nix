@@ -130,8 +130,6 @@ in {
     vlc
     unzip
     bat
-    neofetch
-    fastfetch
     dmidecode
     # albert
     (google-cloud-sdk.withExtraComponents [
@@ -151,7 +149,7 @@ in {
     glib # notify-send
 
     # Packages that should be installed to the user profile.
-    neofetch
+    fastfetch
     nnn # terminal file manager
 
     # archives
@@ -284,7 +282,7 @@ in {
     swaybg
     swayidle
     pamixer
-    light
+    brightnessctl
     brillo
     cava
     hyprshot
@@ -315,7 +313,10 @@ in {
 
     # Audio visualization and effects
     # cava # already listed above
-    pulseeffects-legacy
     easyeffects
+    # Android build tools
+    jdk17
+    gradle
+    android-tools # adb, fastboot
   ];
 }

@@ -33,6 +33,8 @@
     ./common/serial-perms.nix
     ./common/brother-printer.nix
     ./common/rgb.nix
+    ./common/llamacpp.nix
+    ./common/ollama.nix
   ];
 
   services.printing.enable = true;

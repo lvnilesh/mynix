@@ -16,11 +16,16 @@
       features = {
         cdi = true;
       };
+      runtimes = {
+        nvidia = {
+          path = "${pkgs.nvidia-container-toolkit}/bin/nvidia-container-runtime";
+        };
+      };
     };
   };
 
   hardware.nvidia-container-toolkit.enable = true;
 
-  # docker run --rm --device nvidia.com/gpu=all ubuntu nvidia-smi
-  # docker run --rm --runtime=nvidia --gpus all ubuntu nvidia-smi
+  # CDI mode:  docker run --rm --device nvidia.com/gpu=all ubuntu nvidia-smi
+  # Runtime mode: docker run --rm --runtime=nvidia --gpus all ubuntu nvidia-smi
 }

@@ -12,6 +12,8 @@
   home.username = "cloudgenius";
   home.homeDirectory = "/home/cloudgenius";
   home.stateVersion = "25.05";
+  gtk.gtk4.theme = null;
+  xdg.userDirs.setSessionVariables = false;
   # home.stateVersion = "25.11";
 
   programs.home-manager.enable = true;

@@ -46,7 +46,6 @@
     // {
       nixosConfigurations = {
         asus = nixpkgs.lib.nixosSystem {
-          system = "x86_64-linux";
           modules = [
             ./hosts/asus.nix
             home-manager.nixosModules.home-manager
@@ -62,7 +61,6 @@
           };
         };
         venus = nixpkgs.lib.nixosSystem {
-          system = "x86_64-linux";
           modules = [
             ./hosts/venus.nix
             home-manager.nixosModules.home-manager
