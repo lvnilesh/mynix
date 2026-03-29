@@ -48,7 +48,10 @@
   # Kvantum config: use the Nordic-Darker Kvantum theme
   xdg.configFile."chrome-flags.conf".text = ''
     --ozone-platform=wayland
-    --enable-features=WaylandWindowDecorations
+    --enable-features=WaylandWindowDecorations,VaapiVideoDecodeLinuxGL,VaapiVideoEncoder
+    --ignore-gpu-blocklist
+    --enable-gpu-rasterization
+    --use-gl=egl
     --force-dark-mode
   '';
 
