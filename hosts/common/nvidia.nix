@@ -9,7 +9,6 @@
     WLR_NO_HARDWARE_CURSORS = "1";
   };
 
-  # Enable Intel iGPU for display output (monitor on motherboard)
   hardware.graphics.enable = true;
 
   hardware.nvidia = {
@@ -19,12 +18,5 @@
     open = false;
     nvidiaSettings = true;
     package = config.boot.kernelPackages.nvidiaPackages.production;
-    # PRIME: Intel iGPU for display, NVIDIA for offload/compute
-    prime = {
-      offload.enable = true;
-      offload.enableOffloadCmd = true;
-      intelBusId = "PCI:0:2:0";
-      nvidiaBusId = "PCI:1:0:0";
-    };
   };
 }
