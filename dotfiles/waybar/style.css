@@ -117,7 +117,7 @@ window#waybar {
 #memory,
 #temperature,
 #bluetooth,
-#pulseaudio,
+#wireplumber,
 #network {
   background: rgba(59, 66, 82, 0.7);
   color: #d8dee9;
@@ -218,12 +218,12 @@ window#waybar {
 }
 
 /* Pulseaudio specific - Nord Aurora Purple */
-#pulseaudio {
+#wireplumber {
   color: #b48ead;
   font-weight: 600;
 }
 
-#pulseaudio.muted {
+#wireplumber.muted {
   color: #bf616a;
   opacity: 0.5;
 }

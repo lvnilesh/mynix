@@ -9,10 +9,20 @@ Usage: $0 [--force] [--fresh] [--disk-bus virtio|sata] [--drivers-iso /path/virt
   --disk-bus      Primary system disk bus (virtio for performance, sata for built-in Windows driver). Default: virtio.
   --drivers-iso   Attach a secondary CDROM with virtio drivers (virtio-win ISO). Recommended when using --disk-bus virtio.
   --auto-drivers  Automatically download/cache latest virtio-win ISO into /var/lib/libvirt/boot and attach.
+  --arch          CPU architecture: x64 or arm64 (default: auto-detect from host).
+  --post-install   Wait for guest agent, then enable OpenSSH Server (PowerShell default), RDP, and firewall rules.
+  --user NAME      Local account username for unattended install (default: cloudgenius).
+  --password PASS   Password for the local account. If omitted, prompts interactively.
+  --hostname NAME    Windows computer name (default: win11).
+  --no-autounattend  Skip autounattend.xml generation (manual OOBE).
 If domain exists and no flags: attempt to start it.
 Examples:
+  $0 --fresh                            # Fresh install with virtio + auto drivers + local account.
   $0 --fresh --disk-bus sata            # Simpler install, no extra drivers needed.
-  $0 --fresh --disk-bus virtio --drivers-iso /var/lib/libvirt/boot/virtio-win.iso
+  $0 --fresh --no-autounattend          # Fresh install, manual OOBE.
+  $0 --post-install                     # Enable SSH+RDP on running VM.
+  $0 --fresh --user admin               # Custom local account name.
+  $0 --fresh --password s3cret --post-install  # Fully non-interactive.
 EOF
 }
 
@@ -21,6 +31,12 @@ FRESH=0
 DISK_BUS="virtio"
 DRIVERS_ISO=""
 AUTO_DRIVERS=0
+ARCH_OVERRIDE=""
+POST_INSTALL=0
+LOCAL_USER="cloudgenius"
+LOCAL_PASS=""
+HOSTNAME_OVERRIDE="win11"
+NO_AUTOUNATTEND=0
 while [[ $# -gt 0 ]]; do
   case "$1" in
     --force) FORCE=1; shift;;
@@ -33,6 +49,21 @@ while [[ $# -gt 0 ]]; do
       [[ $# -ge 2 ]] || { echo "--drivers-iso needs path" >&2; exit 1; }
       DRIVERS_ISO="$2"; shift 2;;
   --auto-drivers) AUTO_DRIVERS=1; shift;;
+  --post-install) POST_INSTALL=1; shift;;
+  --user)
+      [[ $# -ge 2 ]] || { echo "--user needs value" >&2; exit 1; }
+      LOCAL_USER="$2"; shift 2;;
+  --password)
+      [[ $# -ge 2 ]] || { echo "--password needs value" >&2; exit 1; }
+      LOCAL_PASS="$2"; shift 2;;
+  --hostname)
+      [[ $# -ge 2 ]] || { echo "--hostname needs value" >&2; exit 1; }
+      HOSTNAME_OVERRIDE="$2"; shift 2;;
+  --no-autounattend) NO_AUTOUNATTEND=1; shift;;
+  --arch)
+      [[ $# -ge 2 ]] || { echo "--arch needs value" >&2; exit 1; }
+      ARCH_OVERRIDE="$2"; shift 2;
+      case "$ARCH_OVERRIDE" in x64|arm64) ;; *) echo "Invalid --arch: $ARCH_OVERRIDE (use x64 or arm64)" >&2; exit 1;; esac ;;
     -h|--help) usage; exit 0;;
     *) echo "Unknown arg: $1" >&2; usage; exit 1;;
   esac
@@ -45,8 +76,32 @@ done
 #  * Firmware symlinks from Nix config: /etc/ovmf/OVMF_CODE.ms.fd & /etc/ovmf/OVMF_VARS.ms.fd
 #  * ISO path below exists
 
-VM_NAME="win11"
-ISO="/home/cloudgenius/Downloads/Win11_24H2_English_x64.iso"
+VM_NAME="${HOSTNAME_OVERRIDE:-win11}"
+DOWNLOAD_BASE="https://download.i.cloudgenius.app/Windows"
+DOWNLOAD_DIR="/home/cloudgenius/Downloads"
+
+# Detect architecture
+if [[ -n "${ARCH_OVERRIDE:-}" ]]; then
+  W11_ARCH="$ARCH_OVERRIDE"
+else
+  case "$(uname -m)" in
+    x86_64)  W11_ARCH="x64" ;;
+    aarch64) W11_ARCH="arm64" ;;
+    *)       echo "Unknown host arch $(uname -m), use --arch x64|arm64" >&2; exit 1 ;;
+  esac
+fi
+echo "Target architecture: $W11_ARCH" >&2
+
+ISO=$(ls -1 "$DOWNLOAD_DIR"/Win11_*_English_${W11_ARCH}*.iso 2>/dev/null | sort -V | tail -n1 || true)
+if [[ -z "$ISO" ]]; then
+  echo "No local Win11 $W11_ARCH ISO, checking $DOWNLOAD_BASE/ ..." >&2
+  _remote_iso=$(curl -fsSL "$DOWNLOAD_BASE/" | grep -Eo "Win11_[^\"]+_English_${W11_ARCH}[^\"]*\.iso" | sort -V | tail -n1 || true)
+  if [[ -z "$_remote_iso" ]]; then echo "No Win11 $W11_ARCH ISO found locally or remote" >&2; exit 1; fi
+  echo "Downloading $_remote_iso ..." >&2
+  curl -fSL -o "$DOWNLOAD_DIR/$_remote_iso" "$DOWNLOAD_BASE/$_remote_iso"
+  ISO="$DOWNLOAD_DIR/$_remote_iso"
+fi
+echo "Using Windows ISO: $ISO" >&2
 DISK="/var/lib/libvirt/images/${VM_NAME}.qcow2"
 DISK_SIZE_GB=200
 NVRAM="/var/lib/libvirt/qemu/nvram/${VM_NAME}_VARS.fd"
@@ -73,35 +128,18 @@ fi
 if (( AUTO_DRIVERS )); then
   BOOT_DIR="/var/lib/libvirt/boot"
   sudo install -d -m0755 "$BOOT_DIR"
-  # Use Fedora repo for virtio-win ISO listing
   if ! command -v curl >/dev/null 2>&1; then echo "curl required for --auto-drivers" >&2; exit 1; fi
   echo "Fetching latest virtio-win ISO URL..." >&2
-  # Simple heuristic: fetch directory listing JSON or HTML and grep for virtio-win .iso
-  # Prefer archive for stable naming; fallback to latest directory if parse fails
-  VIRTIO_ARCHIVE="https://fedorapeople.org/groups/virt/virtio-win/direct-downloads/archive-virtio/"
-  VIRTIO_LATEST_DIR="https://fedorapeople.org/groups/virt/virtio-win/direct-downloads/"
-  HTML=$(curl -fsSL "$VIRTIO_ARCHIVE" || true)
-  LATEST=$(echo "$HTML" | grep -Eo 'virtio-win-[0-9]+\.[0-9]+\.[0-9]+-\d+\.iso' | sort -V | tail -n1 || true)
-  if [[ -z "$LATEST" ]]; then
-    HTML2=$(curl -fsSL "$VIRTIO_LATEST_DIR" || true)
-    LATEST=$(echo "$HTML2" | grep -Eo 'virtio-win-[0-9]+\.[0-9]+\.[0-9]+-\d+\.iso' | sort -V | tail -n1 || true)
-  fi
-  if [[ -z "$LATEST" ]]; then
-    # Fallback list (update occasionally)
-    for cand in \
-     virtio-win-0.1.229-1.iso \
-     virtio-win-0.1.228-1.iso \
-     virtio-win-0.1.227-1.iso; do
-      if curl -Ifs "$VIRTIO_ARCHIVE$cand" >/dev/null; then LATEST="$cand"; break; fi
-    done
-  fi
+  VIRTIO_ISO_URL="https://fedorapeople.org/groups/virt/virtio-win/direct-downloads/latest-virtio/"
+  HTML=$(curl -fsSL "$VIRTIO_ISO_URL" || true)
+  LATEST=$(echo "$HTML" | grep -Eo 'virtio-win-[0-9]+\.[0-9]+\.[0-9]+\.iso' | sort -V | tail -n1 || true)
   if [[ -z "$LATEST" ]]; then
     echo "Could not determine latest virtio-win ISO (network or layout change)." >&2; exit 1
   fi
   DRIVERS_ISO="$BOOT_DIR/$LATEST"
   if [[ ! -f "$DRIVERS_ISO" ]]; then
     echo "Downloading $LATEST ..." >&2
-    curl -fSL -o "/tmp/$LATEST" "$VIRTIO_ARCHIVE$LATEST" || curl -fSL -o "/tmp/$LATEST" "$VIRTIO_LATEST_DIR$LATEST"
+    curl -fSL -o "/tmp/$LATEST" "$VIRTIO_ISO_URL$LATEST"
     sudo mv "/tmp/$LATEST" "$DRIVERS_ISO"
   else
     echo "Using cached $DRIVERS_ISO" >&2
@@ -111,8 +149,28 @@ fi
 if [[ -n "$DRIVERS_ISO" && ! -f "$DRIVERS_ISO" ]]; then
   echo "Drivers ISO not found: $DRIVERS_ISO" >&2; exit 1
 fi
+# Auto-fetch virtio drivers when using virtio disk bus
 if [[ "$DISK_BUS" == "virtio" && -z "$DRIVERS_ISO" ]]; then
-  echo "Note: Using virtio disk without --drivers-iso; Windows installer won't see disk until drivers loaded. Use --disk-bus sata or supply --drivers-iso." >&2
+  BOOT_DIR="/var/lib/libvirt/boot"
+  sudo install -d -m0755 "$BOOT_DIR"
+  # Check local cache first
+  _cached=$(ls -1 "$BOOT_DIR"/virtio-win-*.iso 2>/dev/null | sort -V | tail -n1 || true)
+  if [[ -n "$_cached" ]]; then
+    echo "Using cached virtio drivers: $(basename "$_cached")" >&2
+    DRIVERS_ISO="$_cached"
+  else
+    echo "Virtio disk bus requires drivers. Fetching latest virtio-win ISO..." >&2
+    VIRTIO_ISO_URL="https://fedorapeople.org/groups/virt/virtio-win/direct-downloads/latest-virtio/"
+    HTML=$(curl -fsSL "$VIRTIO_ISO_URL" || true)
+    LATEST=$(echo "$HTML" | grep -Eo 'virtio-win-[0-9]+\.[0-9]+\.[0-9]+\.iso' | sort -V | tail -n1 || true)
+    if [[ -z "$LATEST" ]]; then
+      echo "Could not determine latest virtio-win ISO. Use --disk-bus sata or supply --drivers-iso." >&2; exit 1
+    fi
+    echo "Downloading $LATEST ..." >&2
+    curl -fSL -o "/tmp/$LATEST" "$VIRTIO_ISO_URL$LATEST"
+    sudo mv "/tmp/$LATEST" "$BOOT_DIR/$LATEST"
+    DRIVERS_ISO="$BOOT_DIR/$LATEST"
+  fi
 fi
 for f in "$CODE_FW" "$VARS_TMPL"; do
   [[ -f $f ]] || { echo "Missing firmware file: $f" >&2; exit 1; }
@@ -136,16 +194,291 @@ if [[ -f "$NVRAM" ]]; then
   echo "Existing NVRAM file present (will reuse if template attribute matches): $NVRAM";
 fi
 
+VM_EXISTS=0
+VM_RUNNING=0
 if sudo virsh -c qemu:///system dominfo "$VM_NAME" &>/dev/null; then
-  if (( FORCE )); then
-    echo "Undefining existing domain $VM_NAME (force=${FORCE}, fresh=${FRESH})." >&2
-    sudo virsh -c qemu:///system destroy "$VM_NAME" &>/dev/null || true
-    sudo virsh -c qemu:///system undefine "$VM_NAME" --nvram || sudo virsh -c qemu:///system undefine "$VM_NAME" || true
+  VM_EXISTS=1
+  _state=$(sudo virsh -c qemu:///system domstate "$VM_NAME" 2>/dev/null || true)
+  [[ "$_state" == *running* ]] && VM_RUNNING=1
+fi
+
+if (( VM_EXISTS && VM_RUNNING && !FORCE && !FRESH )); then
+  echo "Domain $VM_NAME is already running." >&2
+  if (( POST_INSTALL )); then
+    # Skip to post-install below
+    :
   else
-    echo "Domain $VM_NAME already exists; starting it (use --force or --fresh to recreate)." >&2
-    sudo virsh -c qemu:///system start "$VM_NAME" && exit 0
-    echo "Failed to start existing domain." >&2; exit 1
+    echo "Nothing to do. Use --force to recreate, or --post-install to provision." >&2
+    exit 0
   fi
+elif (( VM_EXISTS && FORCE )); then
+  echo "Undefining existing domain $VM_NAME (force=${FORCE}, fresh=${FRESH})." >&2
+  sudo virsh -c qemu:///system destroy "$VM_NAME" &>/dev/null || true
+  sudo virsh -c qemu:///system undefine "$VM_NAME" --nvram || sudo virsh -c qemu:///system undefine "$VM_NAME" || true
+  VM_EXISTS=0; VM_RUNNING=0
+elif (( VM_EXISTS && !VM_RUNNING && !FORCE )); then
+  echo "Domain $VM_NAME exists but is stopped; starting it." >&2
+  sudo virsh -c qemu:///system start "$VM_NAME"
+  VM_RUNNING=1
+fi
+
+# Create and start VM if it doesn't exist (after possible undefine above)
+if (( !VM_EXISTS )); then
+
+# Generate autounattend.xml with local account (bypass Microsoft account)
+FLOPPY_IMG=""
+if (( !NO_AUTOUNATTEND )); then
+  echo "" >&2
+  echo "Setting up local account: $LOCAL_USER" >&2
+  if [[ -z "$LOCAL_PASS" ]]; then
+    read -rsp "Enter password for $LOCAL_USER: " LOCAL_PASS; echo >&2
+    if [[ -z "$LOCAL_PASS" ]]; then
+      echo "Password cannot be empty." >&2; exit 1
+    fi
+  fi
+
+  AUTOUNATTEND_DIR=$(mktemp -d /tmp/${VM_NAME}-unattend-XXXX)
+  cat > "$AUTOUNATTEND_DIR/autounattend.xml" <<'XMLEOF'
+<?xml version="1.0" encoding="utf-8"?>
+<unattend xmlns="urn:schemas-microsoft-com:unattend">
+  <settings pass="windowsPE">
+    <component name="Microsoft-Windows-International-Core-WinPE"
+               processorArchitecture="amd64"
+               publicKeyToken="31bf3856ad364e35"
+               language="neutral" versionScope="nonSxS">
+      <SetupUILanguage>
+        <UILanguage>en-US</UILanguage>
+      </SetupUILanguage>
+      <InputLocale>en-US</InputLocale>
+      <SystemLocale>en-US</SystemLocale>
+      <UILanguage>en-US</UILanguage>
+      <UserLocale>en-US</UserLocale>
+    </component>
+    <component name="Microsoft-Windows-PnpCustomizationsWinPE"
+               processorArchitecture="amd64"
+               publicKeyToken="31bf3856ad364e35"
+               language="neutral" versionScope="nonSxS">
+      <DriverPaths>
+        <PathAndCredentials wcm:action="add" wcm:keyValue="1">
+          <Path>D:\\viostor\\w11\\amd64</Path>
+        </PathAndCredentials>
+        <PathAndCredentials wcm:action="add" wcm:keyValue="2">
+          <Path>D:\\NetKVM\\w11\\amd64</Path>
+        </PathAndCredentials>
+        <PathAndCredentials wcm:action="add" wcm:keyValue="3">
+          <Path>D:\\viogpudo\\w11\\amd64</Path>
+        </PathAndCredentials>
+        <PathAndCredentials wcm:action="add" wcm:keyValue="4">
+          <Path>D:\\Balloon\\w11\\amd64</Path>
+        </PathAndCredentials>
+        <PathAndCredentials wcm:action="add" wcm:keyValue="5">
+          <Path>D:\\vioserial\\w11\\amd64</Path>
+        </PathAndCredentials>
+        <PathAndCredentials wcm:action="add" wcm:keyValue="6">
+          <Path>D:\\qxlwddm-dod\\w11\\amd64</Path>
+        </PathAndCredentials>
+        <PathAndCredentials wcm:action="add" wcm:keyValue="7">
+          <Path>E:\\viostor\\w11\\amd64</Path>
+        </PathAndCredentials>
+        <PathAndCredentials wcm:action="add" wcm:keyValue="8">
+          <Path>E:\\NetKVM\\w11\\amd64</Path>
+        </PathAndCredentials>
+        <PathAndCredentials wcm:action="add" wcm:keyValue="9">
+          <Path>E:\\viogpudo\\w11\\amd64</Path>
+        </PathAndCredentials>
+        <PathAndCredentials wcm:action="add" wcm:keyValue="10">
+          <Path>E:\\Balloon\\w11\\amd64</Path>
+        </PathAndCredentials>
+        <PathAndCredentials wcm:action="add" wcm:keyValue="11">
+          <Path>E:\\vioserial\\w11\\amd64</Path>
+        </PathAndCredentials>
+        <PathAndCredentials wcm:action="add" wcm:keyValue="12">
+          <Path>E:\\qxlwddm-dod\\w11\\amd64</Path>
+        </PathAndCredentials>
+        <PathAndCredentials wcm:action="add" wcm:keyValue="13">
+          <Path>F:\\viostor\\w11\\amd64</Path>
+        </PathAndCredentials>
+        <PathAndCredentials wcm:action="add" wcm:keyValue="14">
+          <Path>F:\\NetKVM\\w11\\amd64</Path>
+        </PathAndCredentials>
+        <PathAndCredentials wcm:action="add" wcm:keyValue="15">
+          <Path>F:\\viogpudo\\w11\\amd64</Path>
+        </PathAndCredentials>
+        <PathAndCredentials wcm:action="add" wcm:keyValue="16">
+          <Path>F:\\Balloon\\w11\\amd64</Path>
+        </PathAndCredentials>
+        <PathAndCredentials wcm:action="add" wcm:keyValue="17">
+          <Path>F:\\vioserial\\w11\\amd64</Path>
+        </PathAndCredentials>
+        <PathAndCredentials wcm:action="add" wcm:keyValue="18">
+          <Path>F:\\qxlwddm-dod\\w11\\amd64</Path>
+        </PathAndCredentials>
+      </DriverPaths>
+    </component>
+    <component name="Microsoft-Windows-Setup"
+               processorArchitecture="amd64"
+               publicKeyToken="31bf3856ad364e35"
+               language="neutral" versionScope="nonSxS">
+      <DiskConfiguration>
+        <Disk wcm:action="add">
+          <DiskID>0</DiskID>
+          <WillWipeDisk>true</WillWipeDisk>
+          <CreatePartitions>
+            <CreatePartition wcm:action="add">
+              <Order>1</Order>
+              <Type>EFI</Type>
+              <Size>260</Size>
+            </CreatePartition>
+            <CreatePartition wcm:action="add">
+              <Order>2</Order>
+              <Type>MSR</Type>
+              <Size>128</Size>
+            </CreatePartition>
+            <CreatePartition wcm:action="add">
+              <Order>3</Order>
+              <Type>Primary</Type>
+              <Extend>true</Extend>
+            </CreatePartition>
+          </CreatePartitions>
+          <ModifyPartitions>
+            <ModifyPartition wcm:action="add">
+              <Order>1</Order>
+              <PartitionID>1</PartitionID>
+              <Format>FAT32</Format>
+              <Label>System</Label>
+            </ModifyPartition>
+            <ModifyPartition wcm:action="add">
+              <Order>2</Order>
+              <PartitionID>2</PartitionID>
+            </ModifyPartition>
+            <ModifyPartition wcm:action="add">
+              <Order>3</Order>
+              <PartitionID>3</PartitionID>
+              <Format>NTFS</Format>
+              <Label>Windows</Label>
+            </ModifyPartition>
+          </ModifyPartitions>
+        </Disk>
+      </DiskConfiguration>
+      <ImageInstall>
+        <OSImage>
+          <InstallFrom>
+            <MetaData wcm:action="add">
+              <Key>/IMAGE/NAME</Key>
+              <Value>Windows 11 Pro</Value>
+            </MetaData>
+          </InstallFrom>
+          <InstallTo>
+            <DiskID>0</DiskID>
+            <PartitionID>3</PartitionID>
+          </InstallTo>
+        </OSImage>
+      </ImageInstall>
+      <UserData>
+        <ProductKey>
+          <Key>VK7JG-NPHTM-C97JM-9MPGT-3V66T</Key>
+          <WillShowUI>OnError</WillShowUI>
+        </ProductKey>
+        <AcceptEula>true</AcceptEula>
+      </UserData>
+
+    </component>
+  </settings>
+  <settings pass="specialize">
+    <component name="Microsoft-Windows-Deployment"
+               processorArchitecture="amd64"
+               publicKeyToken="31bf3856ad364e35"
+               language="neutral" versionScope="nonSxS">
+      <RunSynchronous>
+        <RunSynchronousCommand wcm:action="add">
+          <Order>1</Order>
+          <Path>reg add HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\OOBE /v BypassNRO /t REG_DWORD /d 1 /f</Path>
+          <Description>Bypass Microsoft account requirement</Description>
+        </RunSynchronousCommand>
+      </RunSynchronous>
+    </component>
+    <component name="Microsoft-Windows-Shell-Setup"
+               processorArchitecture="amd64"
+               publicKeyToken="31bf3856ad364e35"
+               language="neutral" versionScope="nonSxS">
+      <ComputerName>__HOSTNAME__</ComputerName>
+    </component>
+  </settings>
+  <settings pass="oobeSystem">
+    <component name="Microsoft-Windows-Shell-Setup"
+               processorArchitecture="amd64"
+               publicKeyToken="31bf3856ad364e35"
+               language="neutral" versionScope="nonSxS">
+      <OOBE>
+        <HideEULAPage>true</HideEULAPage>
+        <HideWirelessSetupInOOBE>true</HideWirelessSetupInOOBE>
+        <ProtectYourPC>3</ProtectYourPC>
+      </OOBE>
+      <UserAccounts>
+        <LocalAccounts>
+          <LocalAccount wcm:action="add">
+            <Name>__LOCAL_USER__</Name>
+            <Group>Administrators</Group>
+            <Password>
+              <Value>__LOCAL_PASS__</Value>
+              <PlainText>true</PlainText>
+            </Password>
+          </LocalAccount>
+        </LocalAccounts>
+      </UserAccounts>
+      <AutoLogon>
+        <Enabled>true</Enabled>
+        <Username>__LOCAL_USER__</Username>
+        <Password>
+          <Value>__LOCAL_PASS__</Value>
+          <PlainText>true</PlainText>
+        </Password>
+        <LogonCount>1</LogonCount>
+      </AutoLogon>
+      <FirstLogonCommands>
+        <SynchronousCommand wcm:action="add">
+          <Order>1</Order>
+          <CommandLine>cmd /c for %d in (D E F) do if exist %d:\virtio-win-guest-tools.exe start /wait %d:\virtio-win-guest-tools.exe /quiet /norestart</CommandLine>
+          <Description>Install virtio-win guest tools (includes QEMU guest agent)</Description>
+        </SynchronousCommand>
+        <SynchronousCommand wcm:action="add">
+          <Order>2</Order>
+          <CommandLine>cmd /c for %d in (D E F) do if exist %d:\guest-agent\qemu-ga-x86_64.msi msiexec /i %d:\guest-agent\qemu-ga-x86_64.msi /quiet /norestart</CommandLine>
+          <Description>Install QEMU guest agent (fallback if not in guest tools)</Description>
+        </SynchronousCommand>
+        <SynchronousCommand wcm:action="add">
+          <Order>3</Order>
+          <CommandLine>powershell -Command "Set-Service -Name QEMU-GA -StartupType Automatic; Start-Service QEMU-GA -ErrorAction SilentlyContinue"</CommandLine>
+          <Description>Ensure QEMU guest agent service is running</Description>
+        </SynchronousCommand>
+      </FirstLogonCommands>
+    </component>
+  </settings>
+</unattend>
+XMLEOF
+
+  # Patch in username and password (avoid sed delimiter issues with passwords)
+  python3 -c "
+import sys
+with open('$AUTOUNATTEND_DIR/autounattend.xml') as f:
+    xml = f.read()
+xml = xml.replace('__LOCAL_USER__', sys.argv[1])
+xml = xml.replace('__LOCAL_PASS__', sys.argv[2])
+xml = xml.replace('__HOSTNAME__', sys.argv[3])
+with open('$AUTOUNATTEND_DIR/autounattend.xml', 'w') as f:
+    f.write(xml)
+" "$LOCAL_USER" "$LOCAL_PASS" "$HOSTNAME_OVERRIDE"
+
+  # Add wcm namespace to unattend tag
+  sed -i 's|<unattend xmlns="urn:schemas-microsoft-com:unattend">|<unattend xmlns="urn:schemas-microsoft-com:unattend" xmlns:wcm="http://schemas.microsoft.com/WMIConfig/2002/State">|' "$AUTOUNATTEND_DIR/autounattend.xml"
+
+  # Create floppy image with autounattend.xml
+  FLOPPY_IMG=$(mktemp /tmp/${VM_NAME}-unattend-XXXX.img)
+  dd if=/dev/zero of="$FLOPPY_IMG" bs=1440K count=1 2>/dev/null
+  mkfs.fat -F 12 "$FLOPPY_IMG" >/dev/null 2>&1
+  mcopy -i "$FLOPPY_IMG" "$AUTOUNATTEND_DIR/autounattend.xml" ::autounattend.xml
+  echo "Created unattend floppy with local account '$LOCAL_USER'" >&2
+  rm -rf "$AUTOUNATTEND_DIR"
 fi
 
 TMP_XML=$(mktemp /tmp/${VM_NAME}-XXXX.xml)
@@ -189,14 +522,14 @@ cat > "$TMP_XML" <<EOF
       <driver name='qemu' type='qcow2' cache='none' discard='unmap'/>
       <source file='$DISK'/>
       <target dev='$([ "$DISK_BUS" = virtio ] && echo vda || echo sda)' bus='$DISK_BUS'/>
-      <boot order='2'/>
+      <boot order='1'/>
     </disk>
     <disk type='file' device='cdrom'>
       <driver name='qemu' type='raw'/>
       <source file='$ISO'/>
       <target dev='$([ "$DISK_BUS" = virtio ] && echo sdb || echo sdc)' bus='sata'/>
       <readonly/>
-      <boot order='1'/>
+      <boot order='2'/>
     </disk>
 $(
   if [[ -n "$DRIVERS_ISO" ]]; then
@@ -211,7 +544,7 @@ DRIVE
   fi)
     <controller type='usb' model='qemu-xhci'/>
     <interface type='network'>
-      <source network='default'/>
+      <source network='br0'/>
       <model type='virtio'/>
     </interface>
     <tpm model='tpm-crb'>
@@ -219,16 +552,25 @@ DRIVE
     </tpm>
     <input type='tablet' bus='usb'/>
     <input type='keyboard' bus='usb'/>
-    <graphics type='spice' autoport='yes'>
-      <listen type='none'/>
-    </graphics>
-    <video><model type='virtio' heads='1'/></video>
+    <graphics type='vnc' port='-1' autoport='yes' listen='0.0.0.0'/>
+    <video><model type='qxl' ram='65536' vram='65536' vgamem='16384' heads='1'/></video>
     <channel type='unix'>
       <target type='virtio' name='org.qemu.guest_agent.0'/>
     </channel>
     <rng model='virtio'>
       <backend model='random'>/dev/urandom</backend>
     </rng>
+$(
+  if [[ -n "$FLOPPY_IMG" ]]; then
+    cat <<FLOPPY
+    <disk type='file' device='floppy'>
+      <driver name='qemu' type='raw'/>
+      <source file='$FLOPPY_IMG'/>
+      <target dev='fda' bus='fdc'/>
+      <readonly/>
+    </disk>
+FLOPPY
+  fi)
   </devices>
 </domain>
 EOF
@@ -243,9 +585,120 @@ if ! sudo virsh -c qemu:///system start "$VM_NAME"; then
   sudo virsh -c qemu:///system undefine "$VM_NAME" --nvram || true
   sudo virsh -c qemu:///system define "$TMP_XML" >/dev/null
   if sudo virsh -c qemu:///system start "$VM_NAME"; then
-    echo "VM $VM_NAME started after NVRAM fallback."; exit 0
+    echo "VM $VM_NAME started after NVRAM fallback."
+    VM_RUNNING=1
   else
     echo "Failed again after fallback." >&2; exit 1
   fi
 fi
 echo "VM $VM_NAME started. Connect with: virt-viewer --connect qemu:///system $VM_NAME"
+  VM_RUNNING=1
+fi  # end of !VM_EXISTS block
+
+# --- Post-install provisioning ---
+if (( POST_INSTALL )); then
+  echo "Waiting for guest agent (this may take a few minutes on first boot)..." >&2
+  for i in $(seq 1 90); do
+    if sudo virsh qemu-agent-command "$VM_NAME" '{"execute":"guest-ping"}' &>/dev/null; then
+      echo "Guest agent responding." >&2
+      break
+    fi
+    sleep 5
+  done
+  if ! sudo virsh qemu-agent-command "$VM_NAME" '{"execute":"guest-ping"}' &>/dev/null; then
+    echo "Guest agent not available after timeout. Install qemu-ga inside Windows first." >&2
+    exit 1
+  fi
+
+  run_ps() {
+    local cmd="$1"
+    local label="${2:-}"
+    local timeout="${3:-120}"
+    [[ -n "$label" ]] && echo "  $label ..." >&2
+    # Escape backslashes for JSON
+    local escaped_cmd="${cmd//\\/\\\\}"
+    local json="{\"execute\":\"guest-exec\",\"arguments\":{\"path\":\"powershell.exe\",\"arg\":[\"-NoProfile\",\"-Command\",\"${escaped_cmd}\"],\"capture-output\":true}}"
+    local result
+    result=$(sudo virsh qemu-agent-command "$VM_NAME" "$json" 2>&1) || { echo "  FAILED: $result" >&2; return 1; }
+    local pid
+    pid=$(echo "$result" | grep -o '"pid":[0-9]*' | cut -d: -f2)
+    # Poll until command finishes
+    local elapsed=0
+    while (( elapsed < timeout )); do
+      sleep 3
+      elapsed=$((elapsed + 3))
+      local status
+      status=$(sudo virsh qemu-agent-command "$VM_NAME" "{\"execute\":\"guest-exec-status\",\"arguments\":{\"pid\":$pid}}" 2>/dev/null || true)
+      if echo "$status" | grep -q '"exited":true'; then
+        local exit_code
+        exit_code=$(echo "$status" | grep -o '"exitcode":[0-9]*' | cut -d: -f2)
+        if [[ "$exit_code" != "0" && -n "$exit_code" ]]; then
+          local err_b64
+          err_b64=$(echo "$status" | grep -o '"err-data":"[^"]*"' | cut -d'"' -f4)
+          [[ -n "$err_b64" ]] && echo "    stderr: $(echo "$err_b64" | base64 -d 2>/dev/null)" >&2
+        fi
+        return "${exit_code:-0}"
+      fi
+    done
+    echo "  TIMEOUT after ${timeout}s" >&2
+    return 1
+  }
+
+  echo "Configuring OpenSSH Server (idempotent)..." >&2
+  run_ps "if ((Get-WindowsCapability -Online -Name OpenSSH.Server~~~~0.0.1.0).State -ne 'Installed') { Add-WindowsCapability -Online -Name OpenSSH.Server~~~~0.0.1.0; 'INSTALLED' } else { 'ALREADY_INSTALLED' }" "Installing OpenSSH Server" 180
+  run_ps "if ((Get-Service sshd -ErrorAction SilentlyContinue).Status -ne 'Running') { Start-Service sshd } ; Set-Service -Name sshd -StartupType Automatic" "Starting sshd"
+  run_ps "New-ItemProperty -Path 'HKLM:\\SOFTWARE\\OpenSSH' -Name DefaultShell -Value 'C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe' -PropertyType String -Force" "Setting PowerShell as default SSH shell"
+  run_ps "if (-not (Get-NetFirewallRule -Name OpenSSH-Server -ErrorAction SilentlyContinue)) { netsh advfirewall firewall add rule name=OpenSSH-Server dir=in action=allow protocol=TCP localport=22; 'ADDED' } else { 'ALREADY_EXISTS' }" "Firewall rule for SSH"
+
+  echo "Enabling Remote Desktop (idempotent)..." >&2
+  run_ps "Set-ItemProperty -Path 'HKLM:\System\CurrentControlSet\Control\Terminal Server' -Name fDenyTSConnections -Value 0" "Enabling RDP registry"
+  run_ps "Set-Service -Name SessionEnv -StartupType Automatic; Set-Service -Name TermService -StartupType Automatic; Set-Service -Name UmRdpService -StartupType Automatic" "Setting RDP services to auto-start"
+  run_ps "Set-NetFirewallRule -DisplayGroup 'Remote Desktop' -Profile Any -Enabled True" "Firewall rule for RDP (all profiles)"
+  run_ps "Set-NetConnectionProfile -NetworkCategory Private" "Setting network to Private"
+  # RDP services may need a reboot to fully start via guest agent; schedule if not listening
+  run_ps "if (-not (Test-NetConnection -ComputerName localhost -Port 3389 -InformationLevel Quiet -WarningAction SilentlyContinue)) { shutdown /r /t 10 /c 'Reboot for RDP activation'; 'REBOOT_SCHEDULED' } else { 'RDP_LISTENING' }" "Verifying RDP listener" 30
+
+  echo "Removing Windows bloatware..." >&2
+  run_ps "Get-AppxPackage -AllUsers | Where-Object { \$_.Name -match 'BingNews|BingWeather|GamingApp|GetHelp|Getstarted|MicrosoftOfficeHub|SolitaireCollection|People|PowerAutomate|Todos|WindowsAlarms|FeedbackHub|WindowsMaps|SoundRecorder|Xbox|YourPhone|ZuneMusic|ZuneVideo|QuickAssist|Teams|Clipchamp|549981C3F5F10|StickyNotes|ScreenSketch|windowscommunicationsapps|WindowsMeetNow' } | Remove-AppxPackage -ErrorAction SilentlyContinue" "Removing bloat apps" 120 || true
+  run_ps "Get-AppxProvisionedPackage -Online | Where-Object { \$_.PackageName -match 'BingNews|BingWeather|GamingApp|GetHelp|Getstarted|MicrosoftOfficeHub|SolitaireCollection|People|PowerAutomate|Todos|WindowsAlarms|FeedbackHub|WindowsMaps|SoundRecorder|Xbox|YourPhone|ZuneMusic|ZuneVideo|QuickAssist|Teams|Clipchamp|549981C3F5F10|StickyNotes|ScreenSketch|windowscommunicationsapps|WindowsMeetNow' } | Remove-AppxProvisionedPackage -Online -ErrorAction SilentlyContinue" "Deprovisioning bloat (prevents reinstall)" 120 || true
+
+  echo "Disabling telemetry and ads..." >&2
+  run_ps "Set-ItemProperty -Path 'HKLM:\SOFTWARE\Policies\Microsoft\Windows\DataCollection' -Name AllowTelemetry -Value 0 -Force; New-Item -Path 'HKLM:\SOFTWARE\Policies\Microsoft\Windows\DataCollection' -Force | Out-Null; Set-ItemProperty -Path 'HKLM:\SOFTWARE\Policies\Microsoft\Windows\DataCollection' -Name AllowTelemetry -Value 0" "Disabling telemetry" || true
+  run_ps "New-Item -Path 'HKLM:\SOFTWARE\Policies\Microsoft\Windows\CloudContent' -Force | Out-Null; Set-ItemProperty -Path 'HKLM:\SOFTWARE\Policies\Microsoft\Windows\CloudContent' -Name DisableWindowsSpotlightFeatures -Value 1; Set-ItemProperty -Path 'HKLM:\SOFTWARE\Policies\Microsoft\Windows\CloudContent' -Name DisableTailoredExperiencesWithDiagnosticData -Value 1; Set-ItemProperty -Path 'HKLM:\SOFTWARE\Policies\Microsoft\Windows\CloudContent' -Name DisableThirdPartySuggestions -Value 1" "Disabling ads and suggestions" || true
+
+  echo "Disabling Copilot and widgets..." >&2
+  run_ps "New-Item -Path 'HKLM:\SOFTWARE\Policies\Microsoft\Windows\WindowsCopilot' -Force | Out-Null; Set-ItemProperty -Path 'HKLM:\SOFTWARE\Policies\Microsoft\Windows\WindowsCopilot' -Name TurnOffWindowsCopilot -Value 1" "Disabling Copilot" || true
+  run_ps "New-Item -Path 'HKLM:\SOFTWARE\Policies\Microsoft\Dsh' -Force | Out-Null; Set-ItemProperty -Path 'HKLM:\SOFTWARE\Policies\Microsoft\Dsh' -Name AllowNewsAndInterests -Value 0" "Disabling Widgets" || true
+
+  echo "Disabling unnecessary services..." >&2
+  run_ps "Set-Service -Name DiagTrack -StartupType Disabled -ErrorAction SilentlyContinue; Stop-Service -Name DiagTrack -Force -ErrorAction SilentlyContinue; Set-Service -Name dmwappushservice -StartupType Disabled -ErrorAction SilentlyContinue; Stop-Service -Name dmwappushservice -Force -ErrorAction SilentlyContinue" "Disabling DiagTrack and WAP Push" || true
+
+  echo "Removing OneDrive..." >&2
+  run_ps "Stop-Process -Name OneDrive -Force -ErrorAction SilentlyContinue; if (Test-Path \"\$env:SystemRoot\SysWOW64\OneDriveSetup.exe\") { Start-Process \"\$env:SystemRoot\SysWOW64\OneDriveSetup.exe\" '/uninstall' -Wait } elseif (Test-Path \"\$env:SystemRoot\System32\OneDriveSetup.exe\") { Start-Process \"\$env:SystemRoot\System32\OneDriveSetup.exe\" '/uninstall' -Wait }" "Uninstalling OneDrive" 60 || true
+
+  echo "Disabling web search and Bing in Start menu..." >&2
+  run_ps "New-Item -Path 'HKLM:\SOFTWARE\Policies\Microsoft\Windows\Explorer' -Force | Out-Null; Set-ItemProperty -Path 'HKLM:\SOFTWARE\Policies\Microsoft\Windows\Explorer' -Name DisableSearchBoxSuggestions -Value 1; New-Item -Path 'HKLM:\SOFTWARE\Policies\Microsoft\Windows' -Force | Out-Null; Set-ItemProperty -Path 'HKLM:\SOFTWARE\Policies\Microsoft\Windows' -Name DisableSearchBoxSuggestions -Value 1" "Disabling Bing search" || true
+
+  echo "Disabling lock screen ads and Spotlight..." >&2
+  run_ps "New-Item -Path 'HKLM:\SOFTWARE\Policies\Microsoft\Windows\CloudContent' -Force | Out-Null; Set-ItemProperty -Path 'HKLM:\SOFTWARE\Policies\Microsoft\Windows\CloudContent' -Name DisableWindowsSpotlightOnLockScreen -Value 1; Set-ItemProperty -Path 'HKLM:\SOFTWARE\Policies\Microsoft\Windows\CloudContent' -Name DisableWindowsSpotlightWindowsWelcomeExperience -Value 1; Set-ItemProperty -Path 'HKLM:\SOFTWARE\Policies\Microsoft\Windows\CloudContent' -Name DisableWindowsConsumerFeatures -Value 1" "Disabling Spotlight and lock screen ads" || true
+
+  echo "Disabling Activity History..." >&2
+  run_ps "Set-ItemProperty -Path 'HKLM:\SOFTWARE\Policies\Microsoft\Windows\System' -Name EnableActivityFeed -Value 0 -Force; Set-ItemProperty -Path 'HKLM:\SOFTWARE\Policies\Microsoft\Windows\System' -Name PublishUserActivities -Value 0 -Force; Set-ItemProperty -Path 'HKLM:\SOFTWARE\Policies\Microsoft\Windows\System' -Name UploadUserActivities -Value 0 -Force" "Disabling Activity History" || true
+
+  echo "Disabling hibernation..." >&2
+  run_ps "powercfg /hibernate off" "Disabling hibernation" || true
+
+  echo "Preventing reinstall of removed apps..." >&2
+  run_ps "New-Item -Path 'HKLM:\SOFTWARE\Policies\Microsoft\Windows\CloudContent' -Force | Out-Null; Set-ItemProperty -Path 'HKLM:\SOFTWARE\Policies\Microsoft\Windows\CloudContent' -Name DisableWindowsConsumerFeatures -Value 1; Set-ItemProperty -Path 'HKLM:\SOFTWARE\Policies\Microsoft\Windows\CloudContent' -Name DisableCloudOptimizedContent -Value 1; Set-ItemProperty -Path 'HKLM:\SOFTWARE\Policies\Microsoft\Windows\CloudContent' -Name DisableSoftLanding -Value 1" "Disabling Consumer Features" || true
+
+  echo "Cleaning up Start menu and taskbar..." >&2
+  run_ps "New-Item -Path 'HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\Advanced' -Force | Out-Null; Set-ItemProperty -Path 'HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\Advanced' -Name TaskbarDa -Value 0 -Force; Set-ItemProperty -Path 'HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\Advanced' -Name TaskbarMn -Value 0 -Force; Set-ItemProperty -Path 'HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\Advanced' -Name ShowTaskViewButton -Value 0 -Force; New-Item -Path 'HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Search' -Force | Out-Null; Set-ItemProperty -Path 'HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Search' -Name SearchboxTaskbarMode -Value 0 -Force" "Cleaning taskbar (hide widgets, chat, task view, search box)" || true
+
+  # Report IP
+  sleep 3
+  _ip=$(sudo virsh domifaddr "$VM_NAME" --source agent 2>/dev/null | grep ipv4 | awk '{print $4}' | cut -d/ -f1 | head -1)
+  echo "" >&2
+  echo "Post-install complete. VM accessible at:" >&2
+  echo "  SSH: ssh ${LOCAL_USER}@${_ip:-<pending>}" >&2
+  echo "  RDP: ${_ip:-<pending>}:3389" >&2
+fi

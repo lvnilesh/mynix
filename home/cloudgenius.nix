@@ -46,6 +46,7 @@
     papirus-icon-theme
     resilio-sync
     yt-dlp
+    claude-code
     prismlauncher
     nerd-fonts.jetbrains-mono
     (pkgs.writeShellScriptBin "nettools-help" ''
@@ -260,7 +261,7 @@
       # NOTE: fontconfig reports the NL (no ligatures) mono family as present: "JetBrainsMonoNL Nerd Font Mono"
       # We standardize on that to avoid fallback mismatches and boxes for Nerd glyphs.
       font_family = "JetBrainsMonoNL Nerd Font Mono";
-      font_size = 12.0;
+      font_size = 14.0;
     };
   };
 
@@ -333,12 +334,14 @@
           "workbench.preferredDarkColorTheme" = "Nord";
           "workbench.startupEditor" = "none";
           "editor.fontFamily" = "JetBrainsMono Nerd Font, monospace";
+          "editor.fontSize" = 14;
           "editor.fontLigatures" = true;
           "editor.bracketPairColorization.enabled" = true;
           "editor.semanticHighlighting.enabled" = true;
           "window.titleBarStyle" = "custom";
           # Prefer the mono patched variant for terminals so glyphs render correctly
           "terminal.integrated.fontFamily" = "JetBrainsMono Nerd Font Mono, monospace";
+          "terminal.integrated.fontSize" = 14;
           "terminal.integrated.minimumContrastRatio" = 4.2;
           "workbench.iconTheme" = "material-icon-theme";
           "material-icon-theme.saturation" = 0;

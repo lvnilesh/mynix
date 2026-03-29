@@ -39,6 +39,22 @@
           }
         ]
       '')
+      (pkgs.writeTextDir "share/wireplumber/wireplumber.conf.d/52-no-suspend-lsx.conf" ''
+        monitor.alsa.rules = [
+          {
+            matches = [
+              {
+                node.name = "alsa_output.usb-KEF_LSX_II_LT-01.analog-stereo"
+              }
+            ]
+            actions = {
+              update-props = {
+                session.suspend-timeout-seconds = 0
+              }
+            }
+          }
+        ]
+      '')
     ];
   };
 }

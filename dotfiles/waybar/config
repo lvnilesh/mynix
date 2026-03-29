@@ -11,7 +11,7 @@
     "group/tray-expander",
     "bluetooth",
     "network",
-    "pulseaudio",
+    "wireplumber",
     "cpu",
     "memory",
     "temperature",
@@ -105,23 +105,15 @@
     "tooltip-format-enumerate-connected-battery": "{device_alias}\t{device_address}\t{device_battery_percentage}%",
     "on-click": "blueman-manager"
   },
-  "pulseaudio": {
+  "wireplumber": {
     "format": "{icon} {volume}%",
     "format-muted": " muted",
-    "format-icons": {
-      "headphone": "",
-      "hands-free": "",
-      "headset": "",
-      "phone": "",
-      "portable": "",
-      "car": "",
-      "default": ["", "", ""]
-    },
+    "format-icons": ["", "", ""],
     "scroll-step": 5,
     "on-click": "pavucontrol",
-    "on-click-right": "pamixer -t",
+    "on-click-right": "wpctl set-mute @DEFAULT_AUDIO_SINK@ toggle",
     "tooltip": true,
-    "tooltip-format": "{desc}\nVolume: {volume}%"
+    "tooltip-format": "{node_name}\nVolume: {volume}%"
   },
   "network": {
     "interval": 3,
