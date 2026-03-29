@@ -1,0 +1,23 @@
+window#waybar { background: #282A36; color: #F8F8F2; border-bottom: 2px solid #BD93F9; }
+#workspaces button { color: #F8F8F2; border-bottom: 2px solid transparent; }
+#workspaces button.active { color: #8BE9FD; border-bottom: 2px solid #BD93F9; }
+#workspaces button.urgent { color: #FF5555; border-bottom: 2px solid #FF5555; }
+#window { color: #6272A4; }
+#clock { color: #F8F8F2; }
+#cpu { color: #8BE9FD; }
+#memory { color: #8BE9FD; }
+#temperature { color: #50FA7B; }
+#temperature.critical { color: #FF5555; }
+#bluetooth { color: #BD93F9; }
+#wireplumber { color: #FF79C6; }
+#network { color: #BD93F9; }
+#network.disconnected { color: #FF5555; }
+#wireplumber.muted { color: #6272A4; }
+#custom-brightness { color: #F1FA8C; }
+#custom-music { color: #FF79C6; }
+#custom-caffeine.caffeine-on { color: #F1FA8C; }
+#custom-caffeine.caffeine-off { color: #6272A4; }
+#custom-expand-icon { color: #6272A4; }
+.tray-item { background: #21222C; }
+tooltip { background: #21222C; border: 1px solid #6272A4; color: #F8F8F2; }
+tooltip label { color: #F8F8F2; }

@@ -52,24 +52,8 @@
     # };
   };
 
-  # Also see modules/cpu-power.nix
-
-  # CPU governor for consistent performance use systemd instead since cpufreq is unavailable
-  # services.cpufreq = {
-  #   enable = true;
-  #   governor = "performance";
-  # };
-
-  # Set governor at boot using systemd service
-  systemd.services.set-cpu-governor = {
-    description = "Set CPU governor to performance";
-    after = ["multi-user.target"];
-    wantedBy = ["multi-user.target"];
-    serviceConfig = {
-      Type = "oneshot";
-      ExecStart = "${pkgs.linuxPackages.cpupower}/bin/cpupower frequency-set -g performance";
-    };
-  };
+  # CPU governor — use NixOS-native option (persists across suspend/resume)
+  powerManagement.cpuFreqGovernor = "performance";
 
   systemd.tmpfiles.rules = [
     # Ensure nvram directory exists (permissions: rwx for owner, rx for group)
@@ -81,15 +65,13 @@
   ];
 
   environment.systemPackages = with pkgs; [
-    pkgs.linuxPackages.cpupower # Ensure cpupower tool is available for governing performance
     virt-manager
     swtpm
     libguestfs
     spice
     spice-gtk
-    virtiofsd # enable virtiofs for shared folders
+    virtiofsd
     virt-viewer
-    lm_sensors
     qemu
   ];
 

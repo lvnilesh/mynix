@@ -1,0 +1,9 @@
+* { color: #C0CAF5; }
+window { background: rgba(26, 27, 38, 0.95); border: 2px solid #7AA2F7; }
+#input { background: #15161E; border: 1px solid #414868; color: #C0CAF5; caret-color: #7AA2F7; }
+#input:focus { border: 1px solid #7AA2F7; }
+#entry:selected { background: #15161E; border-left: 2px solid #7AA2F7; }
+#entry:selected * { color: #7DCFFF; }
+#entry:hover:not(:selected) { background: rgba(21, 22, 30, 0.5); }
+#prompt { color: #7AA2F7; }
+#no-results { color: #F7768E; }

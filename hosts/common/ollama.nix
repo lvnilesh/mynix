@@ -20,6 +20,10 @@
     };
   };
 
+  # Do NOT auto-start: qwen27 starts on boot and conflicts for GPU VRAM.
+  # Start manually: sudo systemctl start ollama
+  systemd.services.ollama.wantedBy = pkgs.lib.mkForce [];
+
   # Open port for LAN access
   networking.firewall.allowedTCPPorts = [11434];
 }

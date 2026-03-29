@@ -1,0 +1,30 @@
+#!/usr/bin/env bash
+# Cycle to next wallpaper for the current theme
+set -euo pipefail
+
+THEME=$(cat "$HOME/.config/current-theme" 2>/dev/null || echo nord)
+WALL_DIR="$HOME/Pictures/wallpapers/$THEME"
+STATE="$HOME/.config/current-wallpaper-index"
+
+# Fallback: if no directory, try single file
+if [ ! -d "$WALL_DIR" ]; then
+    exit 0
+fi
+
+# Get sorted list of wallpapers
+mapfile -t WALLS < <(find "$WALL_DIR" -maxdepth 1 -type f \( -name '*.jpg' -o -name '*.png' -o -name '*.webp' \) | sort)
+COUNT=${#WALLS[@]}
+[ "$COUNT" -eq 0 ] && exit 0
+
+# Get current index and advance
+IDX=$(cat "$STATE" 2>/dev/null || echo 0)
+IDX=$(( (IDX + 1) % COUNT ))
+echo "$IDX" > "$STATE"
+
+WALLPAPER="${WALLS[$IDX]}"
+
+pkill swaybg 2>/dev/null || true
+sleep 0.2
+swaybg -i "$WALLPAPER" -m fill &disown
+
+notify-send -t 2000 "Wallpaper" "$(basename "$WALLPAPER")" 2>/dev/null || true

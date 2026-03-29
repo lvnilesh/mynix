@@ -1,313 +1,128 @@
 /*
- * Nord-Themed Waybar Style for Hyprland
- * Matches Nordic-Darker GTK theme
- * Modern glassmorphism with rounded corners
+ * Waybar — flat, compact, omarchy-inspired
+ * Layout only; colors come from theme.css (managed by theme-switch)
  */
 
+/* Theme colors (written by theme-switch script) */
+@import url("/home/cloudgenius/.config/waybar/theme.css");
+
 * {
-  font-family: "JetBrainsMono Nerd Font", "FontAwesome", sans-serif;
-  font-size: 13px;
+  font-family: "JetBrainsMono Nerd Font", sans-serif;
+  font-size: 14px;
   font-weight: 500;
   min-height: 0;
   border: none;
+  border-radius: 0;
 }
 
-window#waybar {
-  background: rgba(46, 52, 64, 0.88);
-  color: #eceff4;
-  border-radius: 12px;
-  border: 1px solid rgba(76, 86, 106, 0.6);
-  margin: 8px 12px 0 12px;
-  padding: 0;
-  box-shadow: 0 2px 16px rgba(0, 0, 0, 0.5);
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-}
+/* ── Left ── */
 
-/* Left modules spacing */
 .modules-left {
   margin-left: 8px;
 }
 
-/* Right modules spacing */
-.modules-right {
-  margin-right: 8px;
-}
-
-/* Workspaces styling - Nord themed */
 #workspaces button {
-  background: rgba(76, 86, 106, 0.5);
-  color: #d8dee9;
-  border: 1px solid rgba(129, 161, 193, 0.4);
-  border-radius: 8px;
-  padding: 3px 12px;
+  all: initial;
+  padding: 0 12px;
   margin: 0 3px;
-  transition: all 0.2s ease;
-  min-width: 32px;
+  min-width: 16px;
+  font-family: "JetBrainsMono Nerd Font", sans-serif;
   font-size: 14px;
   font-weight: 600;
-}
-
-#workspaces button.active {
-  background: linear-gradient(135deg, #81a1c1 0%, #88c0d0 100%);
-  color: #2e3440;
-  border: 1px solid #81a1c1;
-  font-size: 16px;
-  font-weight: bold;
-  box-shadow: 0 0 10px rgba(129, 161, 193, 0.4);
-}
-
-#workspaces button.urgent {
-  background: #bf616a;
-  color: #eceff4;
-  border: 1px solid #bf616a;
-  animation: urgent-blink 1s ease-in-out infinite;
-}
-
-#workspaces button:hover {
-  background: rgba(136, 192, 208, 0.4);
-  border-color: #88c0d0;
-  color: #eceff4;
-  box-shadow: 0 0 8px rgba(136, 192, 208, 0.3);
+  transition: all 0.15s ease;
 }
 
 #workspaces button.empty {
-  opacity: 0.5;
-  background: rgba(76, 86, 106, 0.25);
-  border-color: rgba(129, 161, 193, 0.2);
+  opacity: 0.4;
 }
 
-@keyframes urgent-blink {
-  0% { opacity: 1; }
-  50% { opacity: 0.6; }
-  100% { opacity: 1; }
-}
-
-/* Window title */
 #window {
-  background: transparent;
-  color: #e0def4;
-  font-weight: bold;
   padding: 0 12px;
-  margin: 0 8px;
+  font-weight: 400;
+  font-style: italic;
 }
 
-/* Center modules - Clock with Nord Aurora gradient */
-.modules-center {
-  margin: 4px;
-  padding: 0;
-}
+/* ── Center ── */
 
 #clock {
-  background: linear-gradient(135deg, #d08770 0%, #ebcb8b 100%);
-  color: #2e3440;
-  font-weight: bold;
-  font-size: 14px;
-  padding: 6px 16px;
-  margin: 0;
-  border-radius: 10px;
-  box-shadow: 0 2px 8px rgba(208, 135, 112, 0.4);
+  font-weight: 600;
+  padding: 0 16px;
 }
 
-#clock {
-  margin-left: 4px;
-}
+/* ── Right modules ── */
 
-/* System monitoring modules - Nord themed */
 #cpu,
 #memory,
 #temperature,
 #bluetooth,
 #wireplumber,
-#network {
-  background: rgba(59, 66, 82, 0.7);
-  color: #d8dee9;
-  padding: 4px 12px;
-  margin: 0 4px;
-  border-radius: 8px;
-  border: 1px solid rgba(76, 86, 106, 0.5);
-  transition: all 0.2s ease;
+#network,
+#custom-brightness,
+#custom-caffeine,
+#custom-music {
+  padding: 0 12px;
+  margin: 0 2px;
+  transition: color 0.15s ease;
 }
 
-#cpu {
-  color: #88c0d0;
-}
+#custom-music { font-style: italic; }
 
-#memory {
-  color: #8fbcbb;
-}
-
-#temperature {
-  color: #a3be8c;
-}
-
-#temperature.critical {
-  color: #bf616a;
-  animation: critical-blink 1s ease-in-out infinite;
-}
-
-@keyframes critical-blink {
-  0% { opacity: 1; }
-  50% { opacity: 0.5; }
-  100% { opacity: 1; }
-}
-
-/* CPU specific */
-#cpu {
-  min-width: 12px;
-  margin: 0 7.5px;
-}
-
-/* Memory specific */
-#memory {
-  color: #88c0d0;
-}
-
-/* Temperature specific */
-#temperature {
-  color: #81a1c1;
-}
-
-#temperature.critical {
-  color: #eb6f92;
-  animation: blink 1s steps(2, start) infinite;
-}
-
-/* Battery specific styling */
-#battery {
-  min-width: 12px;
-}
-
-#battery.charging {
-  color: #a3be8c;
-}
-
-#battery.warning:not(.charging) {
-  color: #ebcb8b;
-}
-
-#battery.critical:not(.charging) {
-  color: #eb6f92;
-  animation: blink 1s steps(2, start) infinite;
-}
-
-/* Bluetooth specific - Nord Frost */
-#bluetooth {
-  color: #88c0d0;
-}
+/* States */
 
 #bluetooth.disabled,
 #bluetooth.off {
-  opacity: 0.4;
-  color: #4c566a;
-}
-
-#bluetooth.connected {
-  color: #88c0d0;
-  font-weight: 600;
-}
-
-/* Network specific - Nord Blue */
-#network {
-  color: #81a1c1;
-  font-weight: 600;
+  opacity: 0.3;
 }
 
 #network.disconnected {
-  color: #bf616a;
-  opacity: 0.6;
-}
-
-/* Pulseaudio specific - Nord Aurora Purple */
-#wireplumber {
-  color: #b48ead;
-  font-weight: 600;
+  opacity: 0.5;
 }
 
 #wireplumber.muted {
-  color: #bf616a;
   opacity: 0.5;
 }
 
-/* Tray expander group */
-#custom-expand-icon {
-  margin-right: 20px;
-  min-width: 12px;
-}
-
-#tray {
-  background: transparent;
-  margin-right: 8px;
-}
-
-.tray-item {
-  background: #393552;
-  margin: 0 2px;
-  padding: 0 6px;
-}
-
-/* Music player module - Nord Aurora Purple accent */
-#custom-music {
-  background: rgba(180, 142, 173, 0.15);
-  color: #b48ead;
-  font-weight: 600;
-  padding: 4px 14px;
-  margin: 0 4px 0 0;
-  border-radius: 8px;
-  border: 1px solid rgba(180, 142, 173, 0.3);
-}
-
-/* Brightness module - Nord Aurora Yellow */
-#custom-brightness {
-  background: rgba(59, 66, 82, 0.7);
-  color: #ebcb8b;
-  padding: 4px 12px;
-  margin: 0 4px;
-  border-radius: 8px;
-  border: 1px solid rgba(76, 86, 106, 0.5);
-}
-
-/* Caffeine custom module - Nord Aurora Orange */
 #custom-caffeine.caffeine-on {
-  color: #d08770;
-  background: rgba(208, 135, 112, 0.2);
   font-weight: bold;
-  padding: 4px 12px;
-  margin: 0 4px;
-  border-radius: 8px;
-  border: 1px solid rgba(208, 135, 112, 0.4);
 }
 
 #custom-caffeine.caffeine-off {
-  color: #4c566a;
-  background: rgba(59, 66, 82, 0.5);
-  opacity: 0.5;
-  padding: 4px 12px;
-  margin: 0 4px;
-  border-radius: 8px;
-  border: 1px solid rgba(76, 86, 106, 0.3);
+  opacity: 0.4;
 }
 
-/* Tooltip styling */
+/* Tray */
+
+.modules-right {
+  margin-right: 8px;
+}
+
+#custom-expand-icon {
+  padding: 0 6px;
+}
+
+#tray {
+  padding: 0 4px;
+}
+
+.tray-item {
+  padding: 0 4px;
+}
+
+/* Tooltip */
+
 tooltip {
-  background: rgba(35, 33, 54, 0.95);
-  border: 1px solid #393552;
-  border-radius: 8px;
-  padding: 8px;
-  color: #e0def4;
+  border-radius: 0;
+  padding: 6px 10px;
 }
 
-tooltip label {
-  color: #e0def4;
+/* Animation */
+
+@keyframes urgent-blink {
+  0%   { opacity: 1; }
+  50%  { opacity: 0.5; }
+  100% { opacity: 1; }
 }
 
-/* Animations */
-@keyframes blink {
-  to {
-    opacity: 0.5;
-  }
-}
-
-/* Hidden class for toggling */
-.hidden {
-  opacity: 0;
+#temperature.critical {
+  animation: urgent-blink 1s ease-in-out infinite;
 }

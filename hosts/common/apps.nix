@@ -116,207 +116,189 @@ in {
   # List packages installed in system profile. To search, run:
   # $ nix search wget
   environment.systemPackages = with pkgs; [
+    # Core CLI
     vim
     wget
     git
     curl
     htop
-    wget
     tree
     alejandra
-    firefox
-
-    htop
-    vlc
-    unzip
     bat
     dmidecode
-    # albert
+    file
+    which
+    gnused
+    gnutar
+    gawk
+    zstd
+    bc
+
+    # Browsers
+    firefox
+
+    # Media
+    vlc
+    mpv
+    audacity
+    easyeffects
+    cava
+    spotify
+    playerctl
+
+    # Cloud CLIs
     (google-cloud-sdk.withExtraComponents [
       google-cloud-sdk.components.gke-gcloud-auth-plugin
       google-cloud-sdk.components.kubectl
     ])
     azure-cli
     awscli2
-    # notify
 
+    # Libraries (for pygobject / compilation)
     libgtop
-    # Add the .dev output for header files needed for compilation
     libgtop.dev
-    dunst # notify-send
-    mako # notify-send
-    libnotify # notify-send
-    glib # notify-send
+    libnotify
+    glib
+    gobject-introspection
+    cairo
+    python3Packages.pycairo
+    python3Packages.pygobject3
 
-    # Packages that should be installed to the user profile.
+    # Notification daemon (mako for Hyprland/Wayland)
+    mako
+
+    # Terminal / shell
     fastfetch
-    nnn # terminal file manager
+    nnn
 
-    # archives
+    # Archives
     zip
     xz
     unzip
     p7zip
 
-    # utils
-    ripgrep # recursively searches directories for a regex pattern
-    jq # A lightweight and flexible command-line JSON processor
-    yq-go # yaml processor https://github.com/mikefarah/yq
-    eza # A modern replacement for ‘ls’
-    fzf # A command-line fuzzy finder
-    # Terminal utilities
+    # Search / utils
+    ripgrep
+    jq
+    yq-go
+    eza
+    fzf
     fd
     tldr
-    bc
-    # Development tools
-    git
-    gh
-    platformio-core # embedded / microcontroller development (pio)
 
-    meslo-lgs-nf # Standalone package
+    # Development tools
+    gh
+    platformio-core
+    python3
+    ninja
+    gcc
+    pkg-config
+    cmake
+    jdk17
+    gradle
+    android-tools
+
+    # Fonts
+    meslo-lgs-nf
     nerd-fonts.droid-sans-mono
     nerd-fonts.fira-code
     jetbrains-mono
     noto-fonts-color-emoji
     nerd-fonts._0xproto
-    nerd-fonts.droid-sans-mono
 
-    # networking tools
+    # Networking
     nmap
-    mtr # A network diagnostic tool
+    mtr
     iperf3
-    speedtest-cli # Internet speed test
-    tcpdump # packet capture and analysis
-    iw # configure and show wireless devices
-    iproute2 # modern replacement providing ip, ss, bridge, tc, etc.
-    dnsutils # `dig` + `nslookup`
-    ldns # replacement of `dig`, it provide the command `drill`
-    aria2 # A lightweight multi-protocol & multi-source command-line download utility
-    socat # replacement of openbsd-netcat
-    nmap # A utility for network discovery and security auditing
-    ipcalc # it is a calculator for the IPv4/v6 addresses
-    wakeonlan # send Wake-on-LAN magic packets
-    arp-scan # ARP scanning and fingerprinting tool
+    speedtest-cli
+    tcpdump
+    iw
+    iproute2
+    dnsutils
+    ldns
+    aria2
+    socat
+    ipcalc
+    wakeonlan
+    arp-scan
 
-    # misc
-    cowsay
-    file
-    which
-    tree
-    gnused
-    gnutar
-    gawk
-    zstd
-
-    # nix related
-    #
-    # it provides the command `nom` works just like `nix`
-    # with more details log output
+    # Nix tools
     nix-output-monitor
 
-    # productivity
-    glow # markdown previewer in terminal
-    rustdesk # remote desktop client/server (GUI)
-    rustdeskX11 # wrapper forcing X11 backend
-    thunderbird # full-featured email + calendar (Lightning), OpenPGP built-in
-    localsend # cross-platform file sharing via local network
+    # Productivity
+    glow
+    rustdesk
+    rustdeskX11
+    thunderbird
+    localsend
 
-    btop # replacement of htop/nmon
-    iotop # io monitoring
-    iftop # network monitoring
+    # Monitoring
+    btop
+    iotop
+    iftop
 
-    # conferencing / meetings (Wayland-wrapped Zoom; replaces bare zoom-us entry)
+    # Conferencing
     zoomWayland
     obsidian
     obsidianWayland
 
-    # system call monitoring
-    strace # system call monitoring
-    ltrace # library call monitoring
-    lsof # list open files
+    # System call monitoring
+    strace
+    ltrace
+    lsof
 
-    # busybox # this messes up grep # a single binary that provides several stripped-down Unix tools in a single executable
-
-    # system tools
+    # System tools
     sysstat
-    lm_sensors # for `sensors` command
+    lm_sensors
     ethtool
-    pciutils # lspci
-    usbutils # lsusb
-    efibootmgr # EFI boot manager utility
-    mokutil # MOK (Machine Owner Key) management for Secure Boot
-    efivar # EFI variable manipulation tool
+    pciutils
+    usbutils
+    efibootmgr
+    mokutil
+    efivar
     blueman
-    # blueman-utils
 
-    # for pip install pygobject
-
-    python3
-    python3Packages.pygobject3
-    playerctl
-    gobject-introspection
-    playerctl
-    ninja
-    gcc
-    pkg-config
-    cmake
-    cairo
-    python3Packages.pycairo
-
+    # Hyprland desktop
     waybar
-    hyprpaper
-    mako
     pavucontrol
-    # Switched from Dolphin to Nautilus for GNOME-friendly file management
     nautilus
     wofi
-    # Removed xdg-desktop-portal-hyprland (added via xdg.portal.extraPortals)
     wlsunset
     eww
-    dunst
     xdg-desktop-portal
     xdg-desktop-portal-gtk
-    playerctl
-    # rofi
-    kitty
     swaybg
     swayidle
     pamixer
     brightnessctl
     brillo
-    cava
     hyprshot
-    spotify
-    nwg-displays # generate monitor config for hyprland
-
+    hyprlock
+    hypridle
+    swayosd
+    cliphist
+    wl-clipboard
+    wf-recorder
+    walker
+    nwg-displays
     libinput
-    # Flashing USB images – balenaEtcher attr missing in current nixpkgs; using popsicle instead
+
+    # USB imaging / IoT
     popsicle
-    # Balena CLI (for balenaCloud / openBalena)
     balena-cli
 
-    samba
-    cifs-utils
+    # File management / viewers
     evince
     xournalpp
-    # Image viewer: use Eye of GNOME (eog) instead of Gwenview
     eog
-    mpv
-    audacity
     file-roller
     gedit
-    localsearch # provides unified local search (replaces tracker-miners / tracker3 CLI)
+    localsearch
 
-    # RGB lighting control
-    openrgb
+    # RGB lighting (liquidctl is primary; openrgb kept for GUI fallback)
     openrgb-with-all-plugins
 
-    # Audio visualization and effects
-    # cava # already listed above
-    easyeffects
-    # Android build tools
-    jdk17
-    gradle
-    android-tools # adb, fastboot
+    # Misc
+    cowsay
   ];
 }

@@ -1,0 +1,31 @@
+[search]
+placeholder = "Search..."
+delay = 0
+force_keyboard_focus = true
+
+[ui]
+fullscreen = false
+show_initial_entries = true
+
+[ui.window]
+width = 644
+
+[ui.list]
+max_height = 300
+
+[builtins.applications]
+actions = true
+
+[builtins.websearch]
+prefix = "@"
+engines = ["google"]
+
+[builtins.calc]
+prefix = "="
+
+[builtins.clipboard]
+prefix = "$"
+max_entries = 50
+
+[builtins.finder]
+prefix = "."

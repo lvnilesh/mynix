@@ -1,7 +1,7 @@
 {
   # Bootloader.
   boot.loader.systemd-boot.enable = true;
-  boot.loader.systemd-boot.configurationLimit = 5; # Keep only 5 most recent generations in boot menu
+  boot.loader.systemd-boot.configurationLimit = 10; # Keep recent generations in boot menu
   boot.loader.efi.canTouchEfiVariables = true;
   boot.loader.grub.enable = false;
 

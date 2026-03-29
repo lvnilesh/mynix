@@ -41,7 +41,8 @@ in {
       ExecStart = "${inferenceDir}/scripts/qwen35";
       MemoryMax = "28G";
       MemorySwapMax = "0";
-      Restart = "always";
+      OOMPolicy = "stop";
+      Restart = "on-failure";
       RestartSec = 30;
       StartLimitBurst = 5;
       StandardOutput = "journal";
@@ -66,7 +67,8 @@ in {
       ExecStart = "${inferenceDir}/scripts/qwen27";
       MemoryMax = "24G";
       MemorySwapMax = "0";
-      Restart = "always";
+      OOMPolicy = "stop";
+      Restart = "on-failure";
       RestartSec = 30;
       StartLimitBurst = 5;
       StandardOutput = "journal";

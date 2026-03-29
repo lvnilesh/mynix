@@ -26,6 +26,7 @@
     Service = {
       ExecStart = "/run/current-system/sw/bin/waybar";
       Restart = "on-failure";
+      RestartSec = 2;
     };
     Install = {
       WantedBy = ["graphical-session.target"];

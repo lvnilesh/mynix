@@ -1,0 +1,47 @@
+#!/usr/bin/env bash
+# Show keybindings cheatsheet via wofi
+WOFI_OPTS="--dmenu --prompt Keybinds --config $HOME/mynix/dotfiles/wofi/config --style $HOME/mynix/dotfiles/wofi/style.css --width 800 --height 600"
+
+cat << 'EOF' | wofi $WOFI_OPTS 2>/dev/null
+── Theme ──────────────────────────────────
+SUPER + T              Switch theme
+SUPER + SHIFT + W      Cycle wallpaper
+── Launchers ──────────────────────────────
+SUPER + A              Walker (apps/@web/=calc/.files/$clip)
+SUPER + D              Wofi app launcher
+SUPER + SPACE          System menu
+── Windows ────────────────────────────────
+SUPER + RETURN         Terminal
+SUPER + W              Close window
+SUPER + C              Chrome (dark mode)
+SUPER + SHIFT + C      Chrome incognito
+SUPER + E              File manager
+SUPER + V              Toggle floating
+SUPER + F              Float + pin (pop out)
+SUPER + O              Toggle opacity
+SUPER + J              Toggle split
+SUPER + G              Toggle gaps
+SUPER + SHIFT + L      Toggle layout (dwindle/master)
+SUPER + Arrows         Move focus
+SUPER + Mouse L/R      Move/resize window
+── Workspaces ─────────────────────────────
+SUPER + 1-9            Switch workspace
+SUPER + SHIFT + 1-9    Move window to workspace
+SUPER + [ / ]          Prev/next workspace
+SUPER + SHIFT + [ / ]  Move to prev/next monitor
+SUPER + Scroll          Scroll workspaces
+SUPER + S              Scratchpad
+SUPER + SHIFT + S      Move to scratchpad
+── Screen & Security ──────────────────────
+SUPER + L              Lock screen
+SUPER + SHIFT + R      Toggle screen recording
+F8                     Screenshot region → clipboard
+── Clipboard & Media ──────────────────────
+SUPER + SHIFT + V      Clipboard history
+Media Keys             Volume/brightness (SwayOSD)
+── System ─────────────────────────────────
+SUPER + R              Restart waybar
+SUPER + P              Pseudo-tile
+SUPER + M              Exit Hyprland
+SUPER + /              This cheatsheet
+EOF

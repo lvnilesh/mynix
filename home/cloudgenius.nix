@@ -14,7 +14,6 @@
   home.stateVersion = "25.05";
   gtk.gtk4.theme = null;
   xdg.userDirs.setSessionVariables = false;
-  # home.stateVersion = "25.11";
 
   programs.home-manager.enable = true;
 
@@ -27,11 +26,11 @@
   };
 
   # System-wide dark theme (Nord) for GTK + Qt
-  # GTK theme package 'nordic' provides Nordic-Darker/Nordic-Dark variants.
   gtk = {
     enable = true;
     theme = {
-      name = "Adwaita"; # built into GTK/libadwaita; no package needed (avoids missing gtk-4.0 css warning)
+      name = "Nordic-darker";
+      package = pkgs.nordic;
     };
     iconTheme = {
       name = "Papirus-Dark";
@@ -39,10 +38,41 @@
     };
   };
 
+  # Qt theming via Kvantum (Nordic Kvantum theme is bundled in the nordic package)
+  qt = {
+    enable = true;
+    platformTheme.name = "kvantum";
+    style.name = "kvantum";
+  };
+
+  # Kvantum config: use the Nordic-Darker Kvantum theme
+  xdg.configFile."chrome-flags.conf".text = ''
+    --ozone-platform=wayland
+    --enable-features=WaylandWindowDecorations
+    --force-dark-mode
+  '';
+
+  xdg.configFile."Kvantum/kvantum.kvconfig".text = ''
+    [General]
+    theme=Nordic-Darker
+  '';
+  # Symlink the Nordic Kvantum theme from the nordic package
+  xdg.configFile."Kvantum/Nordic-Darker".source = "${pkgs.nordic}/share/Kvantum/Nordic-Darker";
+
+  # GTK4 gtk.css is managed by theme-switch script (not HM) for live theme switching
+
   home.packages = with pkgs; [
     kitty
     vscode
-    google-chrome
+    (pkgs.symlinkJoin {
+      name = "google-chrome";
+      paths = [pkgs.google-chrome];
+      buildInputs = [pkgs.makeWrapper];
+      postBuild = ''
+        wrapProgram $out/bin/google-chrome-stable \
+          --set LIBVA_DRIVER_NAME iHD
+      '';
+    })
     papirus-icon-theme
     resilio-sync
     yt-dlp
@@ -186,72 +216,8 @@
     };
   };
 
-  # Starship prompt (Nord aligned)
-  programs.starship = {
-    enable = true;
-    settings = {
-      add_newline = true;
-      palette = "nord";
-      palettes = {
-        nord = {
-          nord0 = "#2E3440";
-          nord1 = "#3B4252";
-          nord4 = "#D8DEE9";
-          cyan = "#88C0D0";
-          blue = "#81A1C1";
-          green = "#A3BE8C";
-          purple = "#B48EAD";
-          yellow = "#EBCB8B";
-          red = "#BF616A";
-        };
-      };
-      # Removed time module and updated symbols; order kept concise
-      format = "$directory$git_branch$git_status$nodejs$rust$python$cmd_duration\n$character";
-      scan_timeout = 10; # ms per module scan to keep prompt snappy
-      character = {
-        success_symbol = "[➜](blue)"; # new primary prompt arrow
-        error_symbol = "[✗](red)"; # clearer error indicator
-        vicmd_symbol = "[«](purple)"; # normal mode indicator in modal shells
-      };
-      directory = {
-        style = "bold cyan";
-        truncation_length = 3;
-        truncate_to_repo = true;
-      };
-      git_branch = {
-        symbol = " "; # nerd font branch icon
-        style = "blue";
-      };
-      git_status = {
-        style = "yellow";
-        conflicted = "⚔";
-        ahead = "↑";
-        behind = "↓";
-        diverged = "⇅";
-        staged = "+";
-        modified = "~";
-        renamed = "»";
-        deleted = "✖";
-        untracked = "?";
-      };
-      cmd_duration = {
-        min_time = 500;
-        format = "[⏱ $duration](purple)";
-      };
-      nodejs = {
-        symbol = " ";
-        style = "green";
-      };
-      python = {
-        symbol = " ";
-        style = "yellow";
-      };
-      rust = {
-        symbol = " ";
-        style = "red";
-      };
-    };
-  };
+  # Starship prompt — enabled here, config managed by theme-switch for live palette switching
+  programs.starship.enable = true;
 
   programs.kitty = {
     enable = true;
@@ -315,9 +281,17 @@
     videos = "$HOME/Videos";
   };
 
-  # Enforce Adwaita dark for GTK apps even if environment incomplete (Hyprland session)
+  # Enforce Nordic dark for GTK apps
   home.sessionVariables = {
-    GTK_THEME = "Adwaita:dark"; # request dark variant properly
+    GTK_THEME = "Nordic-darker";
+  };
+
+  # dconf: tell GNOME/libadwaita to prefer dark color scheme
+  dconf.settings = {
+    "org/gnome/desktop/interface" = {
+      color-scheme = "prefer-dark";
+      gtk-theme = "Nordic-darker";
+    };
   };
 
   # VSCode Nord Dark theme configuration
@@ -426,15 +400,11 @@
 
   # Remove ad-hoc user override files that can fight with declarative defaults under Hyprland + non-Plasma session.
   home.activation.cleanMimeOverrides = lib.hm.dag.entryAfter ["writeBoundary"] ''
-        echo "[activation] Cleaning conflicting mimeapps overrides" >&2
-        rm -f "$HOME/.local/share/applications/mimeapps.list" "$HOME/.config/kde-mimeapps.list"
-        # Clear cache so xdg-mime re-evaluates
-        rm -f "$HOME/.cache/mimeinfo.cache"
-      # Remove obsolete KDE configs
-      rm -f "$HOME/.config/dolphinrc" "$HOME/.config/katerc" "$HOME/.config/gwenviewrc" "$HOME/.config/arkrc" || true
-      rm -rf "$HOME/.cache/ksycoca6"* "$HOME/.cache/ksycoca5"* || true
-    # Purge Kvantum remnants
-    rm -rf "$HOME/.config/Kvantum" || true
+    echo "[activation] Cleaning conflicting mimeapps overrides" >&2
+    rm -f "$HOME/.local/share/applications/mimeapps.list" "$HOME/.config/kde-mimeapps.list"
+    rm -f "$HOME/.cache/mimeinfo.cache"
+    rm -f "$HOME/.config/dolphinrc" "$HOME/.config/katerc" "$HOME/.config/gwenviewrc" "$HOME/.config/arkrc" || true
+    rm -rf "$HOME/.cache/ksycoca6"* "$HOME/.cache/ksycoca5"* || true
   '';
 
   # Thunderbird with Google Calendar provider (Lightning calendar built-in upstream).

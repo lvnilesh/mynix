@@ -64,7 +64,7 @@
         if ! "$MOUNT" -t cifs "//$server/$share" "''$targetDir" \
           -o "credentials=${credentialsFile},uid=${user},gid=users,iocharset=utf8,vers=3.0,nounix,serverino" 2>/dev/null; then
           "$MOUNT" -t cifs "//$server/$share" "''$targetDir" \
-            -o "credentials=${credentialsFile},uid=${user},gid=users,iocharset=utf8,vers=2.1,nounix,serverino" 2>/dev/null || rm -rf "$targetDir"
+            -o "credentials=${credentialsFile},uid=${user},gid=users,iocharset=utf8,vers=2.1,nounix,serverino" 2>/dev/null || rmdir "$targetDir" 2>/dev/null || true
         fi
       done
     done
@@ -81,14 +81,7 @@ in {
       Type = "oneshot";
       ExecStart = "${mountHelper}/bin/mount-smb-shares";
       RemainAfterExit = true;
-      LoadCredential = ["smbcreds:${credentialsFile}"];
     };
-    # Copy credential from systemd-managed secret to expected path if provided
-    preStart = ''
-      if [ -f "$CREDENTIALS_DIRECTORY/smbcreds" ]; then
-        install -m600 -o root -g root "$CREDENTIALS_DIRECTORY/smbcreds" ${credentialsFile}
-      fi
-    '';
   };
 
   systemd.timers.mount-smb-shares-refresh = {

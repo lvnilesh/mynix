@@ -1,0 +1,89 @@
+#!/usr/bin/env bash
+# Comprehensive system menu (omarchy-inspired) — nested wofi menus
+set -euo pipefail
+
+WOFI_OPTS="--dmenu --prompt Menu --config $HOME/mynix/dotfiles/wofi/config --style $HOME/mynix/dotfiles/wofi/style.css"
+SCRIPTS="$HOME/mynix/scripts"
+
+main_menu() {
+    echo -e "Apps\nStyle\nSystem\nMedia\nPower" | wofi $WOFI_OPTS 2>/dev/null
+}
+
+apps_menu() {
+    echo -e "Terminal\nBrowser\nBrowser (Incognito)\nFile Manager\nVS Code\nSpotify\nObsidian\nThunderbird" | wofi $WOFI_OPTS 2>/dev/null
+}
+
+style_menu() {
+    echo -e "Switch Theme\nNext Wallpaper\nToggle Gaps\nToggle Opacity" | wofi $WOFI_OPTS 2>/dev/null
+}
+
+system_menu() {
+    echo -e "System Monitor (btop)\nDisk Usage\nNetwork (nmtui)\nBluetooth\nAudio (pavucontrol)\nScreenshot\nScreen Record Toggle" | wofi $WOFI_OPTS 2>/dev/null
+}
+
+media_menu() {
+    echo -e "Play/Pause\nNext Track\nPrevious Track\nVolume Up\nVolume Down\nMute Toggle" | wofi $WOFI_OPTS 2>/dev/null
+}
+
+power_menu() {
+    echo -e "Lock\nSuspend\nReboot\nShutdown" | wofi $WOFI_OPTS 2>/dev/null
+}
+
+CHOICE=$(main_menu) || exit 0
+
+case "$CHOICE" in
+    Apps)
+        APP=$(apps_menu) || exit 0
+        case "$APP" in
+            Terminal) kitty --config "$HOME/mynix/dotfiles/kitty/kitty.conf" ;;
+            Browser) google-chrome-stable --ozone-platform=wayland --enable-features=WaylandWindowDecorations ;;
+            "Browser (Incognito)") google-chrome-stable --ozone-platform=wayland --enable-features=WaylandWindowDecorations --incognito ;;
+            "File Manager") nautilus ;;
+            "VS Code") code ;;
+            Spotify) spotify ;;
+            Obsidian) obsidian-wayland ;;
+            Thunderbird) thunderbird ;;
+        esac
+        ;;
+    Style)
+        STYLE=$(style_menu) || exit 0
+        case "$STYLE" in
+            "Switch Theme") "$SCRIPTS/theme-switch" ;;
+            "Next Wallpaper") "$SCRIPTS/wallpaper-next" ;;
+            "Toggle Gaps") "$SCRIPTS/gaps-toggle" ;;
+            "Toggle Opacity") hyprctl setprop active opaque toggle ;;
+        esac
+        ;;
+    System)
+        SYS=$(system_menu) || exit 0
+        case "$SYS" in
+            "System Monitor (btop)") kitty --class=btop -e btop ;;
+            "Disk Usage") kitty --class=diskusage -e bash -c 'df -h; echo; du -sh ~/* 2>/dev/null | sort -rh | head -20; read -p "Press enter..."' ;;
+            "Network (nmtui)") kitty --class=nmtui -e nmtui ;;
+            Bluetooth) blueman-manager ;;
+            "Audio (pavucontrol)") pavucontrol ;;
+            Screenshot) hyprshot -m region -c ;;
+            "Screen Record Toggle") "$SCRIPTS/screen-record-toggle" ;;
+        esac
+        ;;
+    Media)
+        MED=$(media_menu) || exit 0
+        case "$MED" in
+            "Play/Pause") playerctl play-pause ;;
+            "Next Track") playerctl next ;;
+            "Previous Track") playerctl previous ;;
+            "Volume Up") swayosd-client --output-volume raise ;;
+            "Volume Down") swayosd-client --output-volume lower ;;
+            "Mute Toggle") swayosd-client --output-volume mute-toggle ;;
+        esac
+        ;;
+    Power)
+        PWR=$(power_menu) || exit 0
+        case "$PWR" in
+            Lock) hyprlock ;;
+            Suspend) systemctl suspend ;;
+            Reboot) systemctl reboot ;;
+            Shutdown) systemctl poweroff ;;
+        esac
+        ;;
+esac

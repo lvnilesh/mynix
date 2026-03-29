@@ -1,0 +1,257 @@
+#!/usr/bin/env bash
+# Theme switcher — applies a theme from ~/mynix/themes/ to all UI components.
+# Usage: theme-switch [theme-name]
+#   If no argument, shows a wofi picker.
+set -euo pipefail
+
+THEMES_DIR="$HOME/mynix/themes"
+STATE_FILE="$HOME/.config/current-theme"
+
+# If no argument, show wofi picker
+if [ -z "${1:-}" ]; then
+    THEME=$(ls "$THEMES_DIR" | wofi --dmenu --prompt "Theme" \
+        --config "$HOME/mynix/dotfiles/wofi/config" \
+        --style "$HOME/mynix/dotfiles/wofi/style.css" 2>/dev/null) || true
+    [ -z "${THEME:-}" ] && exit 0
+else
+    THEME="$1"
+fi
+
+THEME_PATH="$THEMES_DIR/$THEME"
+if [ ! -d "$THEME_PATH" ]; then
+    echo "Theme not found: $THEME" >&2
+    exit 1
+fi
+
+# Ensure target directories exist
+mkdir -p "$HOME/.config/hypr" "$HOME/.config/kitty" "$HOME/.config/waybar" \
+         "$HOME/.config/gtk-4.0" "$HOME/.config/mako" "$HOME/.config/swayosd" \
+         "$HOME/.config/btop/themes" "$HOME/.config/walker"
+
+# Extract colors from theme files
+BG=$(grep 'window_bg_color' "$THEME_PATH/gtk4.css" | head -1 | grep -oP '#[0-9A-Fa-f]{6}')
+FG=$(grep 'window_fg_color' "$THEME_PATH/gtk4.css" | head -1 | grep -oP '#[0-9A-Fa-f]{6}')
+ACCENT=$(grep 'accent_bg_color' "$THEME_PATH/gtk4.css" | head -1 | grep -oP '#[0-9A-Fa-f]{6}')
+HDR=$(grep 'headerbar_bg_color' "$THEME_PATH/gtk4.css" | head -1 | grep -oP '#[0-9A-Fa-f]{6}')
+
+# Read terminal colors from kitty theme
+get_color() { grep "^color${1} " "$THEME_PATH/kitty.conf" | head -1 | awk '{print $2}'; }
+COLOR0=$(get_color 0); COLOR1=$(get_color 1); COLOR2=$(get_color 2); COLOR3=$(get_color 3)
+COLOR4=$(get_color 4); COLOR5=$(get_color 5); COLOR6=$(get_color 6); COLOR7=$(get_color 7)
+COLOR8=$(get_color 8); COLOR9=$(get_color 9); COLOR10=$(get_color 10); COLOR11=$(get_color 11)
+COLOR12=$(get_color 12); COLOR13=$(get_color 13); COLOR14=$(get_color 14); COLOR15=$(get_color 15)
+
+strip() { echo "${1#\#}"; }
+
+# ── Deploy static theme fragments ──
+cp "$THEME_PATH/hyprland.conf" "$HOME/.config/hypr/theme.conf"
+cp "$THEME_PATH/kitty.conf"    "$HOME/.config/kitty/theme.conf"
+cp "$THEME_PATH/waybar.css"    "$HOME/.config/waybar/theme.css"
+cp "$THEME_PATH/wofi.css"      "$HOME/mynix/dotfiles/wofi/theme.css"
+cp "$THEME_PATH/gtk4.css"      "$HOME/.config/gtk-4.0/gtk.css"
+
+# ── Generate hyprlock theme ──
+cat > "$HOME/.config/hypr/hyprlock-theme.conf" << EOF
+\$lock_bg = rgb($(strip "$BG"))
+\$lock_fg = rgb($(strip "$FG"))
+\$lock_accent = rgb($(strip "$ACCENT"))
+\$lock_error = rgb($(strip "$COLOR1"))
+EOF
+
+# ── Generate mako config ──
+cat > "$HOME/.config/mako/config" << EOF
+anchor=top-right
+default-timeout=5000
+width=420
+outer-margin=10
+padding=10,15
+border-size=2
+border-radius=0
+max-icon-size=32
+font=JetBrainsMono Nerd Font 12
+text-color=${FG}
+border-color=${ACCENT}
+background-color=${BG}
+EOF
+
+# ── Generate SwayOSD theme ──
+cat > "$HOME/.config/swayosd/style.css" << EOF
+window {
+  border-radius: 0;
+  opacity: 0.97;
+  border: 2px solid ${FG};
+  background-color: ${BG};
+  color: ${FG};
+}
+label { font-family: 'JetBrainsMono Nerd Font'; font-size: 11pt; }
+progressbar { border-radius: 0; }
+progressbar:disabled trough { min-height: 6px; }
+progressbar trough { min-height: 6px; background-color: alpha(${FG}, 0.2); }
+progressbar trough highlight { background-color: ${ACCENT}; border-radius: 0; }
+image { padding: 6px; -gtk-icon-style: symbolic; color: ${FG}; }
+EOF
+
+# ── Generate btop theme ──
+cat > "$HOME/.config/btop/themes/${THEME}.theme" << EOF
+theme[main_bg]="${BG}"
+theme[main_fg]="${FG}"
+theme[title]="${FG}"
+theme[hi_fg]="${ACCENT}"
+theme[selected_bg]="${HDR}"
+theme[selected_fg]="${FG}"
+theme[inactive_fg]="${COLOR8}"
+theme[graph_text]="${FG}"
+theme[meter_bg]="${COLOR8}"
+theme[proc_misc]="${ACCENT}"
+theme[cpu_box]="${ACCENT}"
+theme[mem_box]="${COLOR2}"
+theme[net_box]="${COLOR5}"
+theme[proc_box]="${COLOR4}"
+theme[div_line]="${COLOR8}"
+theme[temp_start]="${COLOR2}"
+theme[temp_mid]="${COLOR3}"
+theme[temp_end]="${COLOR1}"
+theme[cpu_start]="${ACCENT}"
+theme[cpu_mid]="${COLOR6}"
+theme[cpu_end]="${COLOR1}"
+theme[free_start]="${COLOR2}"
+theme[free_mid]="${COLOR3}"
+theme[free_end]="${COLOR1}"
+theme[cached_start]="${COLOR4}"
+theme[cached_mid]="${COLOR6}"
+theme[cached_end]="${COLOR2}"
+theme[available_start]="${COLOR2}"
+theme[available_mid]="${COLOR14}"
+theme[available_end]="${COLOR6}"
+theme[used_start]="${COLOR1}"
+theme[used_mid]="${COLOR3}"
+theme[used_end]="${COLOR9}"
+theme[download_start]="${ACCENT}"
+theme[download_mid]="${COLOR6}"
+theme[download_end]="${COLOR14}"
+theme[upload_start]="${COLOR5}"
+theme[upload_mid]="${COLOR13}"
+theme[upload_end]="${COLOR1}"
+theme[process_start]="${ACCENT}"
+theme[process_mid]="${COLOR6}"
+theme[process_end]="${COLOR2}"
+EOF
+
+# Set btop to use the theme
+mkdir -p "$HOME/.config/btop"
+if [ -f "$HOME/.config/btop/btop.conf" ]; then
+    sed -i "s/^color_theme = .*/color_theme = \"${THEME}\"/" "$HOME/.config/btop/btop.conf" 2>/dev/null || true
+else
+    echo "color_theme = \"${THEME}\"" > "$HOME/.config/btop/btop.conf"
+fi
+
+# ── Generate starship config (preserves structure, changes palette) ──
+cat > "$HOME/.config/starship.toml" << EOF
+add_newline = true
+palette = "theme"
+format = "\$directory\$git_branch\$git_status\$nodejs\$rust\$python\$cmd_duration\n\$character"
+scan_timeout = 10
+
+[palettes.theme]
+bg = "${BG}"
+fg = "${FG}"
+cyan = "${COLOR6}"
+blue = "${ACCENT}"
+green = "${COLOR2}"
+purple = "${COLOR5}"
+yellow = "${COLOR3}"
+red = "${COLOR1}"
+
+[character]
+success_symbol = "[❯](blue)"
+error_symbol = "[✗](red)"
+vicmd_symbol = "[«](purple)"
+
+[directory]
+style = "bold cyan"
+truncation_length = 3
+truncate_to_repo = true
+
+[git_branch]
+symbol = " "
+style = "blue"
+
+[git_status]
+style = "yellow"
+conflicted = "⚔"
+ahead = "↑"
+behind = "↓"
+diverged = "⇅"
+staged = "+"
+modified = "~"
+renamed = "»"
+deleted = "✖"
+untracked = "?"
+
+[cmd_duration]
+min_time = 500
+format = "[⏱ \$duration](purple)"
+
+[nodejs]
+symbol = " "
+style = "green"
+
+[python]
+symbol = " "
+style = "yellow"
+
+[rust]
+symbol = " "
+style = "red"
+EOF
+
+# ── Generate Walker theme ──
+cat > "$HOME/.config/walker/theme.css" << EOF
+* { font-family: 'JetBrainsMono Nerd Font'; font-size: 16px; color: ${FG}; }
+.activation-label { font-size: 0px; }
+#box { background: alpha(${BG}, 0.95); padding: 20px; border: 2px solid ${ACCENT}; }
+#search { background: ${BG}; padding: 10px; border-bottom: 1px solid ${COLOR8}; }
+#input { background: transparent; border: none; color: ${FG}; font-size: 18px; }
+#spinner { color: ${ACCENT}; }
+#list { margin-top: 8px; }
+.item { padding: 8px 14px; }
+.item:selected { background: ${HDR}; border-left: 2px solid ${ACCENT}; }
+.item:selected label { color: ${ACCENT}; }
+.item:hover:not(:selected) { background: alpha(${HDR}, 0.5); }
+.item label { color: ${FG}; }
+.item .sub { font-size: 0px; }
+EOF
+
+# ── Set wallpaper ──
+WALLPAPER_DIR="$HOME/Pictures/wallpapers/$THEME"
+WALLPAPER=""
+if [ -d "$WALLPAPER_DIR" ]; then
+    WALLPAPER=$(find "$WALLPAPER_DIR" -maxdepth 1 -type f \( -name '*.jpg' -o -name '*.png' \) | sort | head -1)
+fi
+# Fallback to flat file
+if [ -z "$WALLPAPER" ]; then
+    for ext in png jpg; do
+        [ -f "$HOME/Pictures/wallpapers/${THEME}.$ext" ] && WALLPAPER="$HOME/Pictures/wallpapers/${THEME}.$ext" && break
+    done
+fi
+pkill swaybg 2>/dev/null || true
+sleep 0.2
+if [ -n "$WALLPAPER" ] && [ -f "$WALLPAPER" ]; then
+    swaybg -i "$WALLPAPER" -m fill &disown
+else
+    swaybg -c "$BG" &disown
+fi
+# Reset wallpaper index
+echo "0" > "$HOME/.config/current-wallpaper-index"
+
+# ── Reload components ──
+hyprctl reload 2>/dev/null || true
+kitty @ --to unix:@kitty set-colors --all "$HOME/.config/kitty/theme.conf" 2>/dev/null || true
+systemctl --user restart waybar.service 2>/dev/null || true
+makoctl reload 2>/dev/null || true
+
+# Persist selection
+echo "$THEME" > "$STATE_FILE"
+
+# Notify
+notify-send -t 3000 "Theme: $THEME" "All components updated" 2>/dev/null || true
