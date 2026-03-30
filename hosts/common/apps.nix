@@ -145,6 +145,7 @@ in {
     cava
     spotify
     playerctl
+    imagemagick
 
     # Cloud CLIs
     (google-cloud-sdk.withExtraComponents [
