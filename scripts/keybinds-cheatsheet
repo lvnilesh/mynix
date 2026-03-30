@@ -11,15 +11,16 @@ SUPER + A              Walker (apps/@web/=calc/.files/$clip)
 SUPER + D              Wofi app launcher
 SUPER + SPACE          System menu
 ── Windows ────────────────────────────────
-SUPER + RETURN         Terminal
+SUPER + Q / RETURN     Terminal
 SUPER + W              Close window
-SUPER + C              Chrome (dark mode)
+SUPER + C              Chrome
 SUPER + SHIFT + C      Chrome incognito
 SUPER + E              File manager
 SUPER + V              Toggle floating
 SUPER + F              Float + pin (pop out)
 SUPER + O              Toggle opacity
-SUPER + J              Toggle split
+SUPER + J              Toggle split (dwindle)
+SUPER + M              Swap with master
 SUPER + G              Toggle gaps
 SUPER + SHIFT + L      Toggle layout (dwindle/master)
 SUPER + Arrows         Move focus
@@ -42,6 +43,5 @@ Media Keys             Volume/brightness (SwayOSD)
 ── System ─────────────────────────────────
 SUPER + R              Restart waybar
 SUPER + P              Pseudo-tile
-SUPER + M              Exit Hyprland
 SUPER + /              This cheatsheet
 EOF

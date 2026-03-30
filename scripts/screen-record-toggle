@@ -1,14 +1,25 @@
 #!/usr/bin/env bash
-# Toggle screen recording with wf-recorder
-PIDFILE="/tmp/wf-recorder.pid"
+# Toggle screen recording with gpu-screen-recorder (portal + hevc)
+# Super+Shift+R: if recording, stop. If not, show monitor picker.
+PIDFILE="/tmp/gpu-screen-recorder.pid"
+
 if [ -f "$PIDFILE" ] && kill -0 "$(cat "$PIDFILE")" 2>/dev/null; then
-    kill "$(cat "$PIDFILE")"
+    kill -SIGINT "$(cat "$PIDFILE")"
     rm -f "$PIDFILE"
     notify-send -t 2000 "Recording stopped" "Saved to ~/Videos/" 2>/dev/null || true
-else
-    mkdir -p "$HOME/Videos"
-    OUTFILE="$HOME/Videos/recording-$(date +%Y%m%d-%H%M%S).mp4"
-    wf-recorder -f "$OUTFILE" &
-    echo $! > "$PIDFILE"
+    exit 0
+fi
+
+mkdir -p "$HOME/Videos"
+OUTFILE="$HOME/Videos/recording-$(date +%Y%m%d-%H%M%S).mp4"
+
+gpu-screen-recorder -w portal -f 60 -k hevc -q medium -o "$OUTFILE" &
+echo $! > "$PIDFILE"
+sleep 1
+
+if kill -0 "$(cat "$PIDFILE")" 2>/dev/null; then
     notify-send -t 2000 "Recording started" "$OUTFILE" 2>/dev/null || true
+else
+    rm -f "$PIDFILE"
+    notify-send -t 2000 "Recording failed" "gpu-screen-recorder exited" 2>/dev/null || true
 fi

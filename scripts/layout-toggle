@@ -1,0 +1,11 @@
+#!/usr/bin/env bash
+# Toggle layout between dwindle and master
+# Uses state file instead of hyprctl getoption to avoid segfault
+STATE_FILE="/tmp/hypr-layout-master"
+if [ -f "$STATE_FILE" ]; then
+    hyprctl keyword general:layout dwindle
+    rm "$STATE_FILE"
+else
+    hyprctl keyword general:layout master
+    touch "$STATE_FILE"
+fi
