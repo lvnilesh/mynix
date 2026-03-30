@@ -10,6 +10,11 @@
       url = "github:hyprwm/hyprland";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+
+    hermes-agent = {
+      url = "github:NousResearch/hermes-agent";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
   };
 
   outputs = {
@@ -17,6 +22,7 @@
     nixpkgs,
     home-manager,
     hyprland,
+    hermes-agent,
     ...
   } @ inputs: let
     system = "x86_64-linux";
@@ -53,7 +59,7 @@
           }
         ];
         specialArgs = {
-          inherit hyprland;
+          inherit hyprland inputs;
         };
       };
       venus = nixpkgs.lib.nixosSystem {

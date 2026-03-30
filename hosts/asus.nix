@@ -1,6 +1,7 @@
 {
   pkgs,
   modulesPath,
+  inputs,
   ...
 }: {
   # Set system architecture
@@ -35,6 +36,7 @@
     ./common/rgb.nix
     ./common/llamacpp.nix
     ./common/ollama.nix
+    ./common/hermes-agent.nix
     ./common/twitter-chatbot.nix
   ];
 

@@ -43,6 +43,12 @@
     useDHCP = true; # Get IP address for the bridge interface
   };
 
+  # Make br0 the primary route (lower metric = higher priority)
+  networking.dhcpcd.extraConfig = ''
+    interface br0
+    metric 10
+  '';
+
   networking.bridges."br0" = {
     interfaces = ["eno1"]; # Add eno1 to the bridge
     # Optional: You might want to set bridge priority, STP, etc. here if needed

@@ -13,6 +13,7 @@
     ./nuc/compute.nix
     ./nuc/network.nix
     ./nuc/storage.nix
+    ./nuc/services.nix
 
     ./common/bootloader.nix
     ./common/openssh.nix
@@ -30,9 +31,10 @@
     ACTION=="add", SUBSYSTEM=="thunderbolt", ATTR{authorized}=="0", ATTR{authorized}="1"
   '';
 
-  # eGPU kernel param
+  # eGPU kernel params
   boot.kernelParams = [
     "nvidia.NVreg_RegistryDwords=EnableBrightnessControl=0"
+    "pci=realloc" # fix Thunderbolt NHI BAR conflict (EBUSY on 0000:04:00.0)
   ];
 
   # Headless — no display manager
@@ -67,6 +69,7 @@
     usbutils
     ethtool
     lm_sensors
+    kitty.terminfo
   ];
 
   nixpkgs.config.allowUnfree = true;
