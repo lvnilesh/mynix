@@ -1,7 +1,9 @@
-# llama.cpp inference services for Qwen models.
+# llama.cpp inference services for Qwen models (ASUS / RTX 4090).
 #
 # Models are stored in ~/inference/models/ and served via llama-server
 # on port 8001. Only one model can run at a time (they Conflict).
+#
+# Launch scripts: scripts/inference/{qwen27,qwen35}
 #
 # Usage:
 #   sudo systemctl start qwen35    # start Qwen 35B
@@ -16,12 +18,12 @@
 #
 # llama.cpp must be built first:
 #   cd ~/inference/llama.cpp
-#   nix-shell -p cudaPackages.cudatoolkit --impure \
-#     --run 'cmake -B build -DGGML_CUDA=ON -DCMAKE_BUILD_TYPE=Release && cmake --build build -j$(nproc)'
+#   scripts/inference/rebuild-llamacpp.sh
 {pkgs, ...}: let
   user = "cloudgenius";
   homeDir = "/home/${user}";
   inferenceDir = "${homeDir}/inference";
+  scriptsDir = ../../scripts/inference;
   # CUDA runtime libraries needed by llama-server (built with nix-shell CUDA)
   cudaLibs = "${pkgs.cudaPackages.cudatoolkit}/lib:${pkgs.cudaPackages.cuda_cudart}/lib:${pkgs.linuxPackages.nvidia_x11}/lib";
 in {
@@ -38,7 +40,7 @@ in {
       User = user;
       Group = "users";
       WorkingDirectory = inferenceDir;
-      ExecStart = "${inferenceDir}/scripts/qwen35";
+      ExecStart = "${scriptsDir}/qwen35";
       MemoryMax = "28G";
       MemorySwapMax = "0";
       OOMPolicy = "stop";
@@ -64,7 +66,7 @@ in {
       User = user;
       Group = "users";
       WorkingDirectory = inferenceDir;
-      ExecStart = "${inferenceDir}/scripts/qwen27";
+      ExecStart = "${scriptsDir}/qwen27";
       MemoryMax = "24G";
       MemorySwapMax = "0";
       OOMPolicy = "stop";

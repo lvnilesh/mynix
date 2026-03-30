@@ -1,0 +1,24 @@
+#!/run/current-system/sw/bin/bash
+set -euo pipefail
+export CUDA_VISIBLE_DEVICES=1
+
+MODEL_PATH="/home/cloudgenius/inference/models/nomic-embed/nomic-embed-text-v1.5.f16.gguf"
+
+if [[ ! -f "$MODEL_PATH" ]]; then
+    echo "Error: Model not found: $MODEL_PATH" >&2
+    exit 1
+fi
+
+/home/cloudgenius/inference/llama.cpp/build/bin/llama-server \
+    --model "$MODEL_PATH" \
+    --alias nomic-embed-text \
+    --host 0.0.0.0 \
+    --port 8002 \
+    --embedding \
+    --n-gpu-layers 99 \
+    --flash-attn on \
+    --batch-size 2048 \
+    --ubatch-size 512 \
+    --parallel 4 \
+    --ctx-size 2048 \
+    --pooling mean

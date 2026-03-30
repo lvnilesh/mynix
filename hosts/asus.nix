@@ -34,9 +34,9 @@
     ./common/serial-perms.nix
     ./common/brother-printer.nix
     ./common/rgb.nix
-    ./common/llamacpp.nix
+    ./asus/llamacpp.nix
     ./common/ollama.nix
-    ./common/hermes-agent.nix
+    ./asus/hermes-agent.nix
     ./common/twitter-chatbot.nix
   ];
 

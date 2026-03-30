@@ -23,7 +23,7 @@
         default = "unsloth/Qwen3.5-27B";
         provider = "custom";
         base_url = "http://localhost:8001/v1";
-        context_length = 65536;
+        context_length = 131072;
       };
       terminal.backend = "local";
       memory = {

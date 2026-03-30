@@ -10,6 +10,7 @@
   user = "cloudgenius";
   homeDir = "/home/${user}";
   inferenceDir = "${homeDir}/inference";
+  scriptsDir = ../../scripts/inference;
   cudaLibs = "${pkgs.cudaPackages.cudatoolkit}/lib:${pkgs.cudaPackages.cuda_cudart}/lib:${pkgs.linuxPackages.nvidia_x11}/lib";
 in {
   # Qwen 2.5 14B — LLM server on port 8001
@@ -27,7 +28,7 @@ in {
       User = user;
       Group = "users";
       WorkingDirectory = inferenceDir;
-      ExecStart = "${inferenceDir}/scripts/qwen14b";
+      ExecStart = "${scriptsDir}/qwen14b";
       MemoryMax = "14G";
       MemorySwapMax = "0";
       OOMPolicy = "stop";
@@ -53,7 +54,7 @@ in {
       User = user;
       Group = "users";
       WorkingDirectory = inferenceDir;
-      ExecStart = "${inferenceDir}/scripts/nomic-embed";
+      ExecStart = "${scriptsDir}/nomic-embed";
       MemoryMax = "4G";
       MemorySwapMax = "0";
       Restart = "always";
