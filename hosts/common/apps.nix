@@ -123,6 +123,7 @@ in {
     curl
     htop
     tree
+    bitwarden-cli
     alejandra
     bat
     dmidecode

@@ -76,30 +76,8 @@ in {
     };
   };
 
-  # Nomic Embed Text v1.5 on 1080 Ti (GPU 1) — embedding server
-  systemd.services.nomic-embed = {
-    description = "Nomic Embed Text v1.5 (llama.cpp on 1080 Ti)";
-    wantedBy = ["multi-user.target"];
-    after = ["network.target"];
-    wants = ["network.target"];
-    environment = {
-      LD_LIBRARY_PATH = cudaLibs;
-    };
-    serviceConfig = {
-      Type = "simple";
-      User = user;
-      Group = "users";
-      WorkingDirectory = inferenceDir;
-      ExecStart = "${inferenceDir}/scripts/nomic-embed";
-      MemoryMax = "4G";
-      MemorySwapMax = "0";
-      Restart = "always";
-      RestartSec = 10;
-      StandardOutput = "journal";
-      StandardError = "journal";
-    };
-  };
+  # nomic-embed moved to nuc (1080 Ti eGPU) — 2026-03-29
 
-  # Open ports for LAN access: 8001 (llama-server), 8002 (embedding)
-  networking.firewall.allowedTCPPorts = [8001 8002];
+  # Open port for LAN access: 8001 (llama-server)
+  networking.firewall.allowedTCPPorts = [8001];
 }

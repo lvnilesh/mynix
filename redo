@@ -1,4 +1,23 @@
-alejandra .
-# sudo nixos-rebuild switch -I nixos-config=$HOME/mynix/configuration.nix
-sudo nixos-rebuild switch --flake .#asus
-# systemctl --user restart waybar.service
+#!/usr/bin/env bash
+set -euo pipefail
+
+HOST="${1:-asus}"
+
+alejandra . 2>/dev/null
+
+case "$HOST" in
+  asus)
+    sudo nixos-rebuild switch --flake .#asus
+    ;;
+  nuc)
+    nixos-rebuild switch --flake .#nuc --target-host cloudgenius@nuc --sudo
+    ;;
+  all)
+    sudo nixos-rebuild switch --flake .#asus
+    nixos-rebuild switch --flake .#nuc --target-host cloudgenius@nuc --sudo
+    ;;
+  *)
+    echo "Usage: ./redo [asus|nuc|all]"
+    exit 1
+    ;;
+esac

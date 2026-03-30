@@ -63,6 +63,7 @@
     htop
     btop
     jq
+    bitwarden-cli
     ripgrep
     tree
     pciutils
@@ -74,6 +75,7 @@
 
   nixpkgs.config.allowUnfree = true;
   nix.settings.experimental-features = ["nix-command" "flakes"];
+  nix.settings.trusted-users = ["root" "cloudgenius"];
 
   system.stateVersion = "25.11";
 }
