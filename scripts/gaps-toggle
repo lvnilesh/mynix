@@ -1,8 +1,11 @@
 #!/usr/bin/env bash
 # Toggle window gaps between normal (10/5/2) and zero (0/0/0)
-CURRENT=$(hyprctl getoption general:gaps_out -j 2>/dev/null | grep -o '"int": [0-9]*' | grep -o '[0-9]*')
-if [ "${CURRENT:-10}" = "0" ]; then
+# Uses state file instead of hyprctl getoption to avoid Hyprland segfault
+STATE_FILE="/tmp/hypr-gaps-zero"
+if [ -f "$STATE_FILE" ]; then
     hyprctl --batch "keyword general:gaps_out 10; keyword general:gaps_in 5; keyword general:border_size 2"
+    rm "$STATE_FILE"
 else
     hyprctl --batch "keyword general:gaps_out 0; keyword general:gaps_in 0; keyword general:border_size 0"
+    touch "$STATE_FILE"
 fi
