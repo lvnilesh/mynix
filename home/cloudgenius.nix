@@ -7,6 +7,7 @@
   imports = [
     ./hypr.nix
     ./waybar.nix
+    ./localsend.nix
   ];
 
   home.username = "cloudgenius";
@@ -200,8 +201,111 @@
       where = "branch --show-current";
     };
   };
+  programs.autojump = {
+    enable = true;
+  };
+
+  programs.ssh = {
+    enable = true;
+    enableDefaultConfig = false;
+    extraConfig = ''
+      KeepAlive yes
+    '';
+    matchBlocks = {
+      "*" = {
+        addKeysToAgent = "yes";
+        forwardAgent = true;
+        serverAliveInterval = 60;
+      };
+      "192.168.1.* *.cg.home.arpa" = {
+        extraOptions = {
+          StrictHostKeyChecking = "off";
+          UserKnownHostsFile = "/dev/null";
+        };
+      };
+      "* !*.*" = {
+        extraOptions = {
+          StrictHostKeyChecking = "no";
+          UserKnownHostsFile = "/dev/null";
+        };
+      };
+      # --- Homelab ---
+      "asus.cg.home.arpa" = {user = "cloudgenius";};
+      "venus.cg.home.arpa" = {user = "root";};
+      "nuc.cg.home.arpa" = {user = "cloudgenius";};
+      "cosmos.cg.home.arpa" = {user = "cloudgenius";};
+      "imac.cg.home.arpa" = {user = "cloudgenius";};
+      "mini.cg.home.arpa" = {user = "cloudgenius";};
+      "chromebox.cg.home.arpa" = {user = "cloudgenius";};
+      "m1.cg.home.arpa" = {user = "stacey";};
+      "msi.cg.home.arpa" = {user = "cloudgenius";};
+      "echo" = {
+        hostname = "192.168.1.21";
+        port = 8022;
+        user = "u0_a147";
+      };
+      # --- VMs ---
+      "docker-host.cg.home.arpa" = {user = "cloudgenius";};
+      # --- Gitea ---
+      "git.imac.cloudgenius.app" = {
+        hostname = "git.imac.cloudgenius.app";
+        user = "git";
+        identityFile = "~/.ssh/id_ed25519";
+        port = 222;
+      };
+      # --- Cloud ---
+      "azure" = {
+        hostname = "20.3.131.188";
+        user = "cloudgenius";
+      };
+      "CloudGenius" = {
+        hostname = "35.85.45.83";
+        user = "ubuntu";
+        forwardAgent = true;
+        extraOptions.StrictHostKeyChecking = "no";
+        identityFile = "~/.ssh/CloudGenius";
+        localForwards = [
+          {
+            bind.port = 8080;
+            host.address = "127.0.0.1";
+            host.port = 80;
+          }
+          {
+            bind.port = 4000;
+            host.address = "127.0.0.1";
+            host.port = 4000;
+          }
+        ];
+      };
+      "nat" = {
+        hostname = "13.56.161.217";
+        user = "ubuntu";
+        forwardAgent = true;
+        identityFile = "~/.ssh/id_rsa";
+      };
+      "app-0" = {
+        hostname = "10.128.1.136";
+        user = "ubuntu";
+        forwardAgent = true;
+        identityFile = "~/.ssh/id_rsa";
+        proxyCommand = "ssh -q -W %h:%p nat";
+      };
+      "app-1" = {
+        hostname = "10.128.1.122";
+        user = "ubuntu";
+        forwardAgent = true;
+        identityFile = "~/.ssh/id_rsa";
+        proxyCommand = "ssh -q -W %h:%p nat";
+      };
+    };
+  };
+
   programs.bash = {
     enable = true;
+    initExtra = ''
+      # Autojump initialization for directory navigation with `j`
+      [ -f "${pkgs.autojump}/share/autojump/autojump.sh" ] && . "${pkgs.autojump}/share/autojump/autojump.sh"
+    '';
     shellAliases = {
       g = "git"; # enables `g st` etc. using defined git aliases
       open = "xdg-open"; # quick opener alias
@@ -216,6 +320,11 @@
       ifstats = "ip -s -h link";
       # Monitor link/address/route events like 'ip monitor all'
       netmon = "ip monitor all";
+      # Cross-machine clipboard via SSH (p1 = macOS, uses pbcopy/pbpaste)
+      p1-paste = "ssh p1 pbpaste | wl-copy && echo 'p1 clipboard → asus'";
+      p1-copy = "wl-paste | ssh p1 pbcopy && echo 'asus clipboard → p1'";
+      m1-paste = "ssh m1 pbpaste | wl-copy && echo 'm1 clipboard → asus'";
+      m1-copy = "wl-paste | ssh m1 pbcopy && echo 'asus clipboard → m1'";
     };
   };
 

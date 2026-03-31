@@ -126,6 +126,7 @@ in {
     bitwarden-cli
     alejandra
     bat
+    autojump
     dmidecode
     file
     which
@@ -134,6 +135,9 @@ in {
     gawk
     zstd
     bc
+
+    # Remote desktop
+    remmina
 
     # Browsers
     firefox
@@ -303,4 +307,8 @@ in {
     # Misc
     cowsay
   ];
+
+  # LocalSend discovery (UDP) and file transfer (TCP)
+  networking.firewall.allowedTCPPorts = [53317];
+  networking.firewall.allowedUDPPorts = [53317];
 }

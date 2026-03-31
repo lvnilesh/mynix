@@ -1,0 +1,13 @@
+# Nix build outputs
+result/
+result
+result-*
+
+# Temporary files
+*.swp
+*.swo
+*~
+
+# OS generated files
+.DS_Store
+Thumbs.db

@@ -40,9 +40,24 @@
         bashInteractive
         tcpdump
         websocat
+        python3Packages.pikepdf
+
+        # Document processing tools (added April 2026)
+        poppler-utils # pdftoppm, pdfunite, pdftotext
+        qpdf # PDF inspection
+        ghostscript # PDF conversion
+        tesseract # OCR
+        imagemagick # Image/PDF manipulation
+        python313Packages.pillow # PIL for image manipulation
+        python313Packages.reportlab # PDF generation
+        dejavu_fonts # Fonts for PIL/ReportLab
       ];
       shellHook = ''
-        echo "Media tools shell: ffmpeg $(ffmpeg -version | head -n1)" || true
+        echo "Media and document tools shell"
+        echo "  ffmpeg $(ffmpeg -version 2>&1 | head -n1)"
+        echo "  tesseract $(tesseract --version 2>&1 | head -n1)"
+        echo "  poppler-utils (pdftoppm, pdfunite) available"
+        echo "  imagemagick (magick, convert) available"
       '';
     };
 

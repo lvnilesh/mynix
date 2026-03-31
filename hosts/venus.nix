@@ -32,6 +32,7 @@
     ./common/nix-ld.nix
     ./common/serial-perms.nix
     ./common/brother-printer.nix
+    ./common/document-tools.nix
   ];
 
   services.printing.enable = true;
