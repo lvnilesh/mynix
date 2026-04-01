@@ -216,6 +216,9 @@
         addKeysToAgent = "yes";
         forwardAgent = true;
         serverAliveInterval = 60;
+        extraOptions = {
+          LogLevel = "ERROR";
+        };
       };
       "192.168.1.* *.cg.home.arpa" = {
         extraOptions = {

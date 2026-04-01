@@ -55,35 +55,24 @@
   services.twitter-chatbot.enable = true;
   security.sudo.wheelNeedsPassword = false;
 
-  # Login MOTD — Vaultwarden / Hermes secrets reminder
-  users.motd = ''
+  # Hermes secrets reminder — shown only in interactive shells (not GDM)
+  environment.interactiveShellInit = ''
+    if [ -z "$HERMES_MOTD_SHOWN" ] && [ -n "$SSH_TTY" -o -n "$DISPLAY" -a -t 0 ]; then
+      cat <<'MOTD'
     ┌──────────────────────────────────────────────────────────────────┐
     │  Hermes Agent secrets — Vaultwarden single source of truth       │
     │                                                                  │
-    │  Secrets are stored as a Bitwarden Secure Note named             │
-    │  "hermes-agent-env" in vault.i.cloudgenius.app                   │
-    │  (user: nilesh@cloudgeni.us).                                    │
-    │                                                                  │
-    │  Flow:                                                           │
-    │    1. hermes-secrets.service runs as root                        │
-    │    2. Calls rbw as cloudgenius (who has the registered vault)    │
-    │    3. Writes secrets to /etc/hermes-agent/secrets.env            │
-    │    4. hermes-agent.service merges into runtime .env              │
-    │                                                                  │
     │  AFTER REBOOT run as cloudgenius:                                │
     │    rbw unlock                                                    │
-    │    sudo systemctl restart hermes-secrets.service                 │
-    │    sudo systemctl restart hermes-agent.service                   │
+    │    sudo systemctl restart hermes-secrets hermes-agent            │
     │                                                                  │
-    │  First-time setup:                                               │
-    │    rbw config set base_url https://vault.i.cloudgenius.app       │
-    │    rbw config set email nilesh@cloudgeni.us                      │
-    │    rbw config set pinentry pinentry-curses                       │
-    │    rbw config set lock_timeout 0                                 │
-    │    # this disables auto-lock btw. not a good idea.               │
-    │    rbw register                                                  │
-    │    rbw unlock                                                    │
+    │  Vault: vault.i.cloudgenius.app  (nilesh@cloudgeni.us)           │
+    │  Note:  "hermes-agent-env"                                       │
+    │  Details: ~/mynix/hosts/asus/hermes-secrets.nix                  │
     └──────────────────────────────────────────────────────────────────┘
+    MOTD
+      export HERMES_MOTD_SHOWN=1
+    fi
   '';
 
   # System user definition (group membership here)
