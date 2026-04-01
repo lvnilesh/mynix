@@ -41,6 +41,7 @@
     ./asus/hermes-secrets.nix
     ./common/twitter-chatbot.nix
     ./common/document-tools.nix
+    ./common/home-assistant.nix
   ];
 
   # Disable runtime PM for Thunderbolt 4 USB controller (Maple Ridge)
@@ -64,6 +65,10 @@
     │                                                                  │
     │  AFTER REBOOT run as cloudgenius:                                │
     │    rbw unlock                                                    │
+    │    sudo systemctl restart hermes-secrets hermes-agent            │
+    │                                                                  │
+    │  AFTER EDITING SECRETS in Vaultwarden:                           │
+    │    rbw sync                                                      │
     │    sudo systemctl restart hermes-secrets hermes-agent            │
     │                                                                  │
     │  Vault: vault.i.cloudgenius.app  (nilesh@cloudgeni.us)           │
