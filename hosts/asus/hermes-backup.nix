@@ -1,7 +1,8 @@
-# Declarative backup for Hermes Agent state (CLI + gateway).
+# Declarative backup for Hermes Agent state (CLI + gateway) and Honcho.
 #
 # Uses restic with local repository. Backs up only irreplaceable state:
-# memories, secrets, config, skills, sessions DB, cron jobs.
+# memories, secrets, config, skills, sessions DB, cron jobs,
+# and Honcho PostgreSQL (agent memory/context service).
 # Skips regeneratable data: checkpoints, cache, logs, bundled binaries.
 #
 # Backup:   systemctl start restic-backups-hermes
@@ -47,7 +48,11 @@ in {
       # Gateway secrets source
       "/etc/hermes-agent/secrets.env"
 
-      # SQLite consistent snapshots (created by prepare command)
+      # Honcho config (docker-compose + env)
+      "/home/cloudgenius/services/honcho/.env"
+      "/home/cloudgenius/services/honcho/docker-compose.yml"
+
+      # DB consistent snapshots (SQLite + Honcho pg_dump, created by prepare command)
       "/tmp/hermes-db-backup"
     ];
 
@@ -69,6 +74,13 @@ in {
       if [ -f /var/lib/hermes/.hermes/state.db ]; then
         ${pkgs.sqlite}/bin/sqlite3 /var/lib/hermes/.hermes/state.db \
           "VACUUM INTO '/tmp/hermes-db-backup/gateway-state.db'"
+      fi
+
+      # Honcho PostgreSQL atomic dump (agent memory/context DB)
+      if ${pkgs.docker}/bin/docker inspect honcho-database-1 >/dev/null 2>&1; then
+        ${pkgs.docker}/bin/docker exec honcho-database-1 \
+          pg_dump -U honcho honcho \
+          | ${pkgs.gzip}/bin/gzip > /tmp/hermes-db-backup/honcho.sql.gz
       fi
 
       # Prune checkpoint dirs older than 3 days (stale session snapshots)

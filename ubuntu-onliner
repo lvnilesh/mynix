@@ -89,17 +89,26 @@ fi
 echo "Using ISO: $ISO" >&2
 [[ -f "$ISO" ]] || { echo "ISO not found: $ISO" >&2; exit 1; }
 
-# Resolve SSH key
+# Resolve SSH key — derive .pub from private key if missing
 SSH_KEY=""
+for _ktype in id_ed25519 id_rsa id_ecdsa; do
+  _pub="$HOME/.ssh/${_ktype}.pub"
+  _priv="$HOME/.ssh/${_ktype}"
+  if [[ -f "$_pub" ]]; then
+    SSH_KEY_FILE="$_pub"
+    break
+  elif [[ -f "$_priv" ]]; then
+    echo "Deriving public key from $_priv" >&2
+    ssh-keygen -y -f "$_priv" > "$_pub" && chmod 644 "$_pub"
+    SSH_KEY_FILE="$_pub"
+    break
+  fi
+done
 if [[ -f "$SSH_KEY_FILE" ]]; then
   SSH_KEY=$(<"$SSH_KEY_FILE")
   echo "Using SSH key: $SSH_KEY_FILE" >&2
-elif [[ -f "$HOME/.ssh/id_rsa.pub" ]]; then
-  SSH_KEY_FILE="$HOME/.ssh/id_rsa.pub"
-  SSH_KEY=$(<"$SSH_KEY_FILE")
-  echo "Using SSH key: $SSH_KEY_FILE" >&2
 else
-  echo "No SSH key found (checked ~/.ssh/id_ed25519.pub, ~/.ssh/id_rsa.pub)" >&2
+  echo "No SSH key found (checked ~/.ssh/id_{ed25519,rsa,ecdsa}{,.pub})" >&2
 fi
 
 sudo install -d -m0755 /var/lib/libvirt/images
@@ -191,7 +200,9 @@ fi)
     - curl
     - git
   late-commands:
-    - curtin in-target -- systemctl enable ssh
+    - curtin in-target -- systemctl disable ssh.socket
+    - curtin in-target -- systemctl enable ssh.service
+    - curtin in-target -- mkdir -p /run/sshd
     - curtin in-target -- systemctl enable qemu-guest-agent
   storage:
     layout:
@@ -217,82 +228,41 @@ UD
     rm -rf "$CI_DIR"
   fi
 
-  TMP_XML=$(mktemp /tmp/${VM_NAME}-XXXX.xml)
-  cat > "$TMP_XML" <<EOF
-<domain type='kvm'>
-  <name>$VM_NAME</name>
-  <memory unit='MiB'>$RAM</memory>
-  <currentMemory unit='MiB'>$RAM</currentMemory>
-  <vcpu placement='static'>$VCPUS</vcpu>
-  <cpu mode='host-passthrough'>
-    <topology sockets='1' cores='$VCPUS' threads='1'/>
-  </cpu>
-  <os>
-    <type arch='x86_64' machine='pc-q35-8.2'>hvm</type>
-    <loader readonly='yes' type='pflash' format='raw'>$CODE_FW</loader>
-    <nvram template='$VARS_TMPL'>$NVRAM</nvram>
-  </os>
-  <features>
-    <acpi/><apic/>
-    <smm state='on'/>
-  </features>
-  <clock offset='utc'/>
-  <on_poweroff>destroy</on_poweroff>
-  <on_reboot>restart</on_reboot>
-  <on_crash>restart</on_crash>
-  <devices>
-    <emulator>/run/libvirt/nix-emulators/qemu-system-x86_64</emulator>
-    <disk type='file' device='disk'>
-      <driver name='qemu' type='qcow2' cache='none' discard='unmap'/>
-      <source file='$DISK'/>
-      <target dev='vda' bus='virtio'/>
-      <boot order='1'/>
-    </disk>
-    <disk type='file' device='cdrom'>
-      <driver name='qemu' type='raw'/>
-      <source file='$ISO'/>
-      <target dev='sda' bus='sata'/>
-      <readonly/>
-      <boot order='2'/>
-    </disk>
-$(if [[ -n "$SEED_ISO" ]]; then
-cat <<SEED
-    <disk type='file' device='cdrom'>
-      <driver name='qemu' type='raw'/>
-      <source file='$SEED_ISO'/>
-      <target dev='sdb' bus='sata'/>
-      <readonly/>
-    </disk>
-SEED
-fi)
-    <controller type='usb' model='qemu-xhci'/>
-    <interface type='network'>
-      <source network='br0'/>
-      <model type='virtio'/>
-    </interface>
-    <input type='tablet' bus='usb'/>
-    <graphics type='vnc' port='-1' autoport='yes' listen='0.0.0.0'/>
-    <video><model type='qxl' ram='65536' vram='65536' vgamem='16384' heads='1'/></video>
-    <channel type='unix'>
-      <target type='virtio' name='org.qemu.guest_agent.0'/>
-    </channel>
-    <rng model='virtio'>
-      <backend model='random'>/dev/urandom</backend>
-    </rng>
-  </devices>
-</domain>
-EOF
+  # Build virt-install command. --location extracts kernel/initrd from
+  # the ISO and --extra-args passes 'autoinstall' on the kernel cmdline,
+  # which is the only reliable way to skip the "Continue with autoinstall?"
+  # prompt on UEFI VMs (direct <kernel>/<cmdline> XML doesn't work with pflash).
+  VIRT_CMD=(
+    sudo virt-install
+    --connect qemu:///system
+    --name "$VM_NAME"
+    --memory "$RAM"
+    --vcpus "$VCPUS"
+    --cpu host-passthrough
+    --os-variant ubuntu24.04
+    --boot uefi
+    --disk "path=$DISK,format=qcow2,bus=virtio,cache=none,discard=unmap"
+    --network network=br0,model=virtio
+    --graphics vnc,listen=0.0.0.0
+    --video qxl
+    --channel unix,target.type=virtio,target.name=org.qemu.guest_agent.0
+    --rng /dev/urandom
+    --noautoconsole
+  )
 
-  echo "Defining $VM_NAME" >&2
-  sudo virsh -c qemu:///system define "$TMP_XML" >/dev/null
-  echo "Starting $VM_NAME" >&2
-  if ! sudo virsh -c qemu:///system start "$VM_NAME"; then
-    echo "Start failed. Retrying with fresh NVRAM..." >&2
-    sudo rm -f "$NVRAM" || true
-    sudo virsh -c qemu:///system undefine "$VM_NAME" --nvram || true
-    sudo virsh -c qemu:///system define "$TMP_XML" >/dev/null
-    sudo virsh -c qemu:///system start "$VM_NAME" || { echo "Failed." >&2; exit 1; }
+  if (( NO_AUTOINSTALL )); then
+    VIRT_CMD+=(--cdrom "$ISO")
+  else
+    VIRT_CMD+=(--location "$ISO,kernel=casper/vmlinuz,initrd=casper/initrd")
+    VIRT_CMD+=(--extra-args "autoinstall ds=nocloud")
   fi
+
+  if [[ -n "$SEED_ISO" ]]; then
+    VIRT_CMD+=(--disk "path=$SEED_ISO,device=cdrom,bus=sata,readonly=on")
+  fi
+
+  echo "Creating $VM_NAME with virt-install" >&2
+  "${VIRT_CMD[@]}" || { echo "virt-install failed." >&2; exit 1; }
   echo "VM $VM_NAME started." >&2
   VM_RUNNING=1
 fi

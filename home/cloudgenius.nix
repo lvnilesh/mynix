@@ -232,23 +232,24 @@
           UserKnownHostsFile = "/dev/null";
         };
       };
-      # --- Homelab ---
-      "asus.cg.home.arpa" = {user = "cloudgenius";};
-      "venus.cg.home.arpa" = {user = "root";};
-      "nuc.cg.home.arpa" = {user = "cloudgenius";};
-      "cosmos.cg.home.arpa" = {user = "cloudgenius";};
-      "imac.cg.home.arpa" = {user = "cloudgenius";};
-      "mini.cg.home.arpa" = {user = "cloudgenius";};
-      "chromebox.cg.home.arpa" = {user = "cloudgenius";};
-      "m1.cg.home.arpa" = {user = "stacey";};
-      "msi.cg.home.arpa" = {user = "cloudgenius";};
+      # --- Homelab (short names for VS Code Remote SSH + Tailscale MagicDNS) ---
+      "asus" = {user = "cloudgenius";};
+      "venus" = {user = "root";};
+      "nuc" = {user = "cloudgenius";};
+      "cosmos" = {user = "cloudgenius";};
+      "imac" = {user = "cloudgenius";};
+      "mini" = {user = "cloudgenius";};
+      "chromebox" = {user = "cloudgenius";};
+      "m1" = {user = "stacey";};
+      "msi" = {user = "cloudgenius";};
+      "clara" = {user = "cloudgenius";};
+      "docker-host" = {user = "cloudgenius";};
       "echo" = {
         hostname = "192.168.1.21";
         port = 8022;
         user = "u0_a147";
       };
       # --- VMs ---
-      "docker-host.cg.home.arpa" = {user = "cloudgenius";};
       # --- Gitea ---
       "git.imac.cloudgenius.app" = {
         hostname = "git.imac.cloudgenius.app";

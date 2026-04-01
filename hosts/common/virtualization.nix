@@ -61,13 +61,11 @@
   # CPU governor — use NixOS-native option (persists across suspend/resume)
   powerManagement.cpuFreqGovernor = "performance";
 
+  # Ensure nvram directory exists for QEMU VMs.
+  # The win11_VARS.fd file is created by libvirt on first VM boot from the
+  # OVMF_VARS template; no need to pre-seed it here.
   systemd.tmpfiles.rules = [
-    # Ensure nvram directory exists (permissions: rwx for owner, rx for group)
-    "d /var/lib/libvirt/qemu/nvram 0750 libvirt-qemu libvirt -"
-    # Create persistent NVRAM vars file for the Windows 11 VM (only if absent).
-    # We keep copying from /run/libvirt/nix-ovmf to pick up initial template;
-    # subsequent flake updates won't overwrite it, preserving enrolled keys.
-    "C /var/lib/libvirt/qemu/nvram/W11_VARS.fd 0640 libvirt-qemu libvirt /run/libvirt/nix-ovmf/OVMF_VARS.ms.fd"
+    "d /var/lib/libvirt/qemu/nvram 0750 qemu-libvirtd libvirtd -"
   ];
 
   environment.systemPackages = with pkgs; [
@@ -77,6 +75,8 @@
     spice
     spice-gtk
     virtiofsd
+    xorriso
+    openssl
     virt-viewer
     qemu
   ];

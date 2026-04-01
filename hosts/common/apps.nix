@@ -151,6 +151,7 @@ in {
     spotify
     playerctl
     imagemagick
+    ffmpeg-full
 
     # Cloud CLIs
     (google-cloud-sdk.withExtraComponents [
@@ -159,6 +160,7 @@ in {
     ])
     azure-cli
     awscli2
+    hcloud
 
     # Libraries (for pygobject / compilation)
     libgtop
