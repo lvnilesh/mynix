@@ -8,7 +8,7 @@
   group = "users"; # primary group, explicit for clarity
   homeDir = "/home/${user}";
   dataDir = "${homeDir}/.local/share/resilio-sync";
-  syncRoot = "${homeDir}/btsync";
+  syncRoot = "${homeDir}/Resilio Sync/";
 in {
   systemd.services.resilio-sync = {
     description = "Resilio Sync";

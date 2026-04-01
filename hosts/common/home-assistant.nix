@@ -17,8 +17,8 @@
     extraComponents = [
       # Core
       "default_config"
-      "met"                 # weather
-      "radio_browser"       # internet radio
+      "met" # weather
+      "radio_browser" # internet radio
 
       # Network discovery
       "ssdp"
@@ -53,14 +53,16 @@
   # Password hash file created by: ~/.hermes/mcp-servers/reset-ha-mqtt.sh
   services.mosquitto = {
     enable = true;
-    listeners = [{
-      port = 1883;
-      settings.allow_anonymous = false;
-      users.homeassistant = {
-        acl = ["readwrite #"];
-        hashedPasswordFile = "/etc/mosquitto/passwd-homeassistant";
-      };
-    }];
+    listeners = [
+      {
+        port = 1883;
+        settings.allow_anonymous = false;
+        users.homeassistant = {
+          acl = ["readwrite #"];
+          hashedPasswordFile = "/etc/mosquitto/passwd-homeassistant";
+        };
+      }
+    ];
   };
 
   # Open firewall for HA web UI and MQTT on local network
