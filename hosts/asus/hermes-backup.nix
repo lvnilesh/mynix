@@ -7,14 +7,25 @@
 # Backup:   systemctl start restic-backups-hermes
 # Browse:   restic -r /home/cloudgenius/backups/hermes-restic snapshots
 # Restore:  restic -r /home/cloudgenius/backups/hermes-restic restore latest --target /
-# Password: /etc/hermes-agent/restic-password (replace with sops-nix later)
-{pkgs, ...}: {
+# Password: RESTIC_PASSWORD in Vaultwarden hermes-agent-env note,
+#           extracted from /etc/hermes-agent/secrets.env at backup time.
+{pkgs, ...}: let
+  # Extract RESTIC_PASSWORD from secrets.env into a standalone file
+  # that the restic module can read via passwordFile.
+  extractPassword = pkgs.writeShellScript "extract-restic-password" ''
+    set -euo pipefail
+    ${pkgs.gnugrep}/bin/grep '^RESTIC_PASSWORD=' /etc/hermes-agent/secrets.env \
+      | ${pkgs.coreutils}/bin/cut -d= -f2- \
+      > /run/restic-hermes-password
+    ${pkgs.coreutils}/bin/chmod 600 /run/restic-hermes-password
+  '';
+in {
   environment.systemPackages = [pkgs.sqlite pkgs.restic];
 
   services.restic.backups.hermes = {
     initialize = true;
     repository = "/home/cloudgenius/backups/hermes-restic";
-    passwordFile = "/etc/hermes-agent/restic-password";
+    passwordFile = "/run/restic-hermes-password";
 
     paths = [
       # CLI user state (irreplaceable)
@@ -24,6 +35,10 @@
       "/home/cloudgenius/.hermes/SOUL.md"
       "/home/cloudgenius/.hermes/cron"
       "/home/cloudgenius/.hermes/skills"
+      "/home/cloudgenius/.hermes/mcp-servers"
+      "/home/cloudgenius/.hermes/images"
+      "/home/cloudgenius/.hermes/pastes"
+      "/home/cloudgenius/.hermes/.hermes_history"
 
       # Gateway state (irreplaceable)
       "/var/lib/hermes/.hermes/memories"
@@ -41,8 +56,10 @@
       ".hub/"
     ];
 
-    # Pre-backup: consistent SQLite snapshots + prune stale checkpoints
+    # Pre-backup: extract password, SQLite snapshots, prune checkpoints
     backupPrepareCommand = ''
+      # Extract restic password from secrets.env
+      ${extractPassword}
       # SQLite must be backed up via dump, not raw file copy
       mkdir -p /tmp/hermes-db-backup
       if [ -f /home/cloudgenius/.hermes/state.db ]; then
@@ -61,6 +78,8 @@
 
     backupCleanupCommand = ''
       rm -rf /tmp/hermes-db-backup
+      # Ensure backup repo is readable for rsync pull from cosmos
+      ${pkgs.coreutils}/bin/chmod -R a+rX /home/cloudgenius/backups/hermes-restic
     '';
 
     timerConfig = {
