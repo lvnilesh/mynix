@@ -1,0 +1,26 @@
+diff --git a/src/embedding_client.py b/src/embedding_client.py
+index 9798dc0..a04be7d 100644
+--- a/src/embedding_client.py
++++ b/src/embedding_client.py
+@@ -1,5 +1,6 @@
+ import asyncio
+ import logging
++import os
+ import threading
+ from collections import defaultdict
+ from typing import NamedTuple
+@@ -56,11 +57,11 @@ class _EmbeddingClient:
+             self.max_embedding_tokens = settings.MAX_EMBEDDING_TOKENS
+             self.max_batch_size = 2048  # Same as OpenAI
+         else:  # openai
+-            if api_key is None:
+-                api_key = settings.LLM.OPENAI_API_KEY
++            api_key = os.environ.get("LLM_OPENAI_EMBEDDING_API_KEY") or api_key or settings.LLM.OPENAI_API_KEY
+             if not api_key:
+                 raise ValueError("OpenAI API key is required")
+-            self.client = AsyncOpenAI(api_key=api_key)
++            openai_base_url = os.environ.get("LLM_OPENAI_EMBEDDING_BASE_URL") or None
++            self.client = AsyncOpenAI(api_key=api_key, base_url=openai_base_url)
+             self.model = "text-embedding-3-small"
+             self.max_embedding_tokens = settings.MAX_EMBEDDING_TOKENS
+             self.max_batch_size = 2048  # OpenAI batch limit

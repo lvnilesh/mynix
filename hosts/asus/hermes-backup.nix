@@ -48,9 +48,9 @@ in {
       # Gateway secrets source
       "/etc/hermes-agent/secrets.env"
 
-      # Honcho config (docker-compose + env)
-      "/home/cloudgenius/services/honcho/.env"
-      "/home/cloudgenius/services/honcho/docker-compose.yml"
+      # Honcho config (Nix-managed, backed up for disaster recovery)
+      "/etc/honcho/env"
+      "/etc/honcho/docker-compose.yml"
 
       # DB consistent snapshots (SQLite + Honcho pg_dump, created by prepare command)
       "/tmp/hermes-db-backup"

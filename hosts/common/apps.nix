@@ -214,6 +214,9 @@ in {
     noto-fonts-color-emoji
     nerd-fonts._0xproto
 
+    # Infrastructure management
+    ansible
+
     # Networking
     nmap
     mtr

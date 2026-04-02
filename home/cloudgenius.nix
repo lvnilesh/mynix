@@ -253,19 +253,13 @@
       "clara" = {user = "cloudgenius";};
       "clara-staging" = {user = "cloudgenius";};
       "docker-host" = {user = "cloudgenius";};
+      "actions-runner" = {user = "cloudgenius";};
+      "t" = {user = "cloudgenius";};
       "u1.tail52f7b.ts.net" = {};
       "echo" = {
         hostname = "192.168.1.21";
         port = 8022;
         user = "u0_a147";
-      };
-      # --- VMs ---
-      # --- Gitea ---
-      "git.imac.cloudgenius.app" = {
-        hostname = "git.imac.cloudgenius.app";
-        user = "git";
-        identityFile = "~/.ssh/id_ed25519";
-        port = 222;
       };
       # --- Cloud ---
       "azure" = {

@@ -42,6 +42,9 @@
     ./common/twitter-chatbot.nix
     ./common/document-tools.nix
     ./common/home-assistant.nix
+    ./common/promtail.nix
+    ./asus/honcho-secrets.nix
+    ./asus/honcho.nix
   ];
 
   # Disable runtime PM for Thunderbolt 4 USB controller (Maple Ridge)
