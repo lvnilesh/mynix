@@ -99,8 +99,13 @@ in {
   # Open port for LAN access: 8001 (llama-server)
   # Restrict to LAN subnet — inference API should not be internet-accessible
   networking.firewall.extraCommands = ''
-    iptables -I INPUT -p tcp --dport 8001 -s 192.168.1.0/24 -j ACCEPT
     iptables -I INPUT -p tcp --dport 8001 -s 127.0.0.0/8 -j ACCEPT
-    iptables -I INPUT -p tcp --dport 8001 -j DROP
+    iptables -I INPUT -p tcp --dport 8001 -s 192.168.1.0/24 -j ACCEPT
+    iptables -A INPUT -p tcp --dport 8001 -j DROP
+  '';
+  networking.firewall.extraStopCommands = ''
+    iptables -D INPUT -p tcp --dport 8001 -s 127.0.0.0/8 -j ACCEPT 2>/dev/null || true
+    iptables -D INPUT -p tcp --dport 8001 -s 192.168.1.0/24 -j ACCEPT 2>/dev/null || true
+    iptables -D INPUT -p tcp --dport 8001 -j DROP 2>/dev/null || true
   '';
 }
