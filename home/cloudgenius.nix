@@ -247,10 +247,13 @@
       "imac" = {user = "cloudgenius";};
       "mini" = {user = "cloudgenius";};
       "chromebox" = {user = "cloudgenius";};
+      "p1" = {user = "cloudgenius";};
       "m1" = {user = "stacey";};
       "msi" = {user = "cloudgenius";};
       "clara" = {user = "cloudgenius";};
+      "clara-staging" = {user = "cloudgenius";};
       "docker-host" = {user = "cloudgenius";};
+      "u1.tail52f7b.ts.net" = {};
       "echo" = {
         hostname = "192.168.1.21";
         port = 8022;
