@@ -64,6 +64,10 @@ in {
       Type = "oneshot";
       ExecStart = fetchScript;
       RemainAfterExit = true;
+      # Retry on failure — rbw/Vaultwarden may not be reachable early in boot
+      Restart = "on-failure";
+      RestartSec = "10s";
+      RestartMaxDelaySec = "60s";
     };
   };
 }

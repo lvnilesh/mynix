@@ -15,7 +15,7 @@
     defaultShared = false;
 
     # Allow printing from network
-    listenAddresses = ["localhost:631"];
+    listenAddresses = ["127.0.0.1:631"];
     allowFrom = ["all"];
 
     # Extra configuration for CUPS
@@ -23,10 +23,6 @@
       # Optimize for laser printer performance
       MaxLogSize 0
       LogLevel info
-
-      # Network printer settings
-      BrowseProtocols cups
-      BrowseAddress @LOCAL
 
       # Security settings
       <Location />

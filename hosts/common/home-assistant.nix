@@ -28,6 +28,7 @@
       "esphome"
       "mqtt"
       "tailscale"
+      "xiaomi_aqara"
     ];
 
     # Declarative base config — HA merges this with UI-configured settings.

@@ -29,11 +29,13 @@
 in {
   systemd.services.qwen35 = {
     description = "Qwen3.5 35B Model Server (llama.cpp)";
-    after = ["network.target"];
+    after = ["network.target" "nvidia-persistenced.service"];
     wants = ["network.target"];
+    requires = ["nvidia-persistenced.service"];
     conflicts = ["qwen27.service" "ollama.service"];
     environment = {
       LD_LIBRARY_PATH = cudaLibs;
+      CUDA_VISIBLE_DEVICES = "0"; # RTX 4090 only
     };
     serviceConfig = {
       Type = "simple";
@@ -49,17 +51,25 @@ in {
       StartLimitBurst = 5;
       StandardOutput = "journal";
       StandardError = "journal";
+      # Hardening — inference should not touch system state
+      ProtectSystem = "strict";
+      ProtectHome = "read-only";
+      PrivateTmp = true;
+      NoNewPrivileges = true;
+      ReadWritePaths = [inferenceDir];
     };
   };
 
   systemd.services.qwen27 = {
     description = "Qwen3.5 27B Model Server (llama.cpp)";
     wantedBy = ["multi-user.target"];
-    after = ["network.target"];
+    after = ["network.target" "nvidia-persistenced.service"];
     wants = ["network.target"];
+    requires = ["nvidia-persistenced.service"];
     conflicts = ["qwen35.service" "ollama.service"];
     environment = {
       LD_LIBRARY_PATH = cudaLibs;
+      CUDA_VISIBLE_DEVICES = "0"; # RTX 4090 only
     };
     serviceConfig = {
       Type = "simple";
@@ -75,11 +85,22 @@ in {
       StartLimitBurst = 5;
       StandardOutput = "journal";
       StandardError = "journal";
+      # Hardening — inference should not touch system state
+      ProtectSystem = "strict";
+      ProtectHome = "read-only";
+      PrivateTmp = true;
+      NoNewPrivileges = true;
+      ReadWritePaths = [inferenceDir];
     };
   };
 
   # nomic-embed moved to nuc (1080 Ti eGPU) — 2026-03-29
 
   # Open port for LAN access: 8001 (llama-server)
-  networking.firewall.allowedTCPPorts = [8001];
+  # Restrict to LAN subnet — inference API should not be internet-accessible
+  networking.firewall.extraCommands = ''
+    iptables -I INPUT -p tcp --dport 8001 -s 192.168.1.0/24 -j ACCEPT
+    iptables -I INPUT -p tcp --dport 8001 -s 127.0.0.0/8 -j ACCEPT
+    iptables -I INPUT -p tcp --dport 8001 -j DROP
+  '';
 }

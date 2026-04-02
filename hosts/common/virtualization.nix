@@ -43,10 +43,15 @@
     useDHCP = true; # Get IP address for the bridge interface
   };
 
+  # Only manage br0 — suppresses "no valid interfaces" warnings for
+  # eno1 (bridged slave) and any other interface dhcpcd might probe.
+  networking.dhcpcd.allowInterfaces = ["br0"];
+
   # Make br0 the primary route (lower metric = higher priority)
   networking.dhcpcd.extraConfig = ''
     interface br0
     metric 10
+    noipv6   # avoids "ipv6_addaddr1: Permission denied" when running unprivileged
   '';
 
   networking.bridges."br0" = {

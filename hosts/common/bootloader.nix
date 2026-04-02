@@ -1,7 +1,7 @@
 {
   # Bootloader.
   boot.loader.systemd-boot.enable = true;
-  boot.loader.systemd-boot.configurationLimit = 10; # Keep recent generations in boot menu
+  boot.loader.systemd-boot.configurationLimit = 20; # Keep more generations for safe rollback
   boot.loader.efi.canTouchEfiVariables = true;
   boot.loader.grub.enable = false;
 
@@ -9,6 +9,9 @@
   nix.gc = {
     automatic = true;
     dates = "weekly";
-    options = "--delete-older-than 14d"; # Delete generations older than 14 days
+    options = "--delete-older-than 30d";
   };
+
+  # Nix store optimization — hardlink identical files to save disk
+  nix.settings.auto-optimise-store = true;
 }

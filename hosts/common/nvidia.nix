@@ -35,4 +35,37 @@
     nvidiaSettings = true;
     package = config.boot.kernelPackages.nvidiaPackages.production;
   };
+
+  # Clean GPU teardown on shutdown/reboot — the NixOS nvidia module already
+  # creates suspend/resume/hibernate services via powerManagement.enable, but
+  # does NOT create one for shutdown/reboot. Without this, nvidia-drm.fbdev=1
+  # combined with NVreg_PreserveVideoMemoryAllocations holds the displays and
+  # the system hangs until monitors are physically unplugged.
+  systemd.services.nvidia-power = {
+    description = "NVIDIA GPU power-off on shutdown/reboot";
+    before = ["shutdown.target" "reboot.target" "halt.target"];
+    wantedBy = ["shutdown.target" "reboot.target" "halt.target"];
+    serviceConfig = {
+      Type = "oneshot";
+      ExecStart = "${config.hardware.nvidia.package.bin}/bin/nvidia-sleep.sh suspend";
+    };
+  };
+
+  # NVIDIA persistence daemon — keeps GPU initialized between CUDA jobs.
+  # Without this, every inference request pays a ~1-2s cold-start penalty
+  # as the driver re-initializes. Critical for llama.cpp and Ollama responsiveness.
+  systemd.services.nvidia-persistenced = {
+    description = "NVIDIA Persistence Daemon";
+    wantedBy = ["multi-user.target"];
+    serviceConfig = {
+      Type = "forking";
+      ExecStart = "${config.hardware.nvidia.package.persistenced}/bin/nvidia-persistenced --verbose";
+      ExecStopPost = "${pkgs.coreutils}/bin/rm -f /var/run/nvidia-persistenced/nvidia-persistenced.pid";
+      Restart = "on-failure";
+    };
+  };
+
+  environment.systemPackages = with pkgs; [
+    nvtopPackages.full # GPU process monitor (like htop for GPUs)
+  ];
 }
