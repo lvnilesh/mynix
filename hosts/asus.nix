@@ -39,7 +39,7 @@
     ./asus/hermes-agent.nix
     ./asus/hermes-backup.nix
     ./asus/hermes-secrets.nix
-    ./common/twitter-chatbot.nix
+    ./common/chatbot.nix
     ./common/document-tools.nix
     ./common/home-assistant.nix
     ./common/promtail.nix
@@ -53,10 +53,14 @@
     ACTION=="add", SUBSYSTEM=="pci", ATTR{vendor}=="0x8086", KERNEL=="0000:3d:00.0", ATTR{power/control}="on"
   '';
 
+  programs.nano.enable = false;
+  environment.variables.EDITOR = "vim";
+  environment.variables.VISUAL = "vim";
+
   programs.gpu-screen-recorder.enable = true;
   services.printing.enable = true;
   services.tailscale.enable = true;
-  services.twitter-chatbot.enable = true;
+  services.chatbot.enable = true;
   security.sudo.wheelNeedsPassword = false;
 
   # Hermes secrets reminder — shown only in interactive shells (not GDM)

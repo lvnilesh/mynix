@@ -4,11 +4,11 @@
   pkgs,
   ...
 }: let
-  cfg = config.services.twitter-chatbot;
-  chatbotDir = "/home/cloudgenius/services/twitter-chatbot";
+  cfg = config.services.chatbot;
+  chatbotDir = "/home/cloudgenius/services/chatbot";
 in {
-  options.services.twitter-chatbot = {
-    enable = lib.mkEnableOption "Twitter Chatbot API Server";
+  options.services.chatbot = {
+    enable = lib.mkEnableOption "Chatbot API Server";
     port = lib.mkOption {
       type = lib.types.int;
       default = 3001;
@@ -17,8 +17,8 @@ in {
   };
 
   config = lib.mkIf cfg.enable {
-    systemd.services.twitter-chatbot = {
-      description = "Twitter Chatbot API Server";
+    systemd.services.chatbot = {
+      description = "Chatbot API Server";
       wantedBy = ["multi-user.target"];
       after = ["network.target"];
       serviceConfig = {
