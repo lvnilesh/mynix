@@ -205,6 +205,13 @@
     enable = true;
   };
 
+  programs.fzf = {
+    enable = true;
+    enableBashIntegration = true;
+    defaultOptions = ["--height 40%" "--reverse" "--border"];
+    historyWidgetOptions = ["--sort" "--exact"];
+  };
+
   programs.ssh = {
     enable = true;
     enableDefaultConfig = false;
@@ -309,6 +316,10 @@
     initExtra = ''
       # Autojump initialization for directory navigation with `j`
       [ -f "${pkgs.autojump}/share/autojump/autojump.sh" ] && . "${pkgs.autojump}/share/autojump/autojump.sh"
+
+      # Up/Down arrow: search history by prefix already typed
+      bind '"\e[A": history-search-backward'
+      bind '"\e[B": history-search-forward'
     '';
     shellAliases = {
       g = "git"; # enables `g st` etc. using defined git aliases
