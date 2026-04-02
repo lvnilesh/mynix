@@ -322,6 +322,10 @@
       bind '"\e[B": history-search-forward'
     '';
     shellAliases = {
+      # Kitty SSH kitten: transparently wraps ssh to auto-deploy xterm-kitty
+      # terminfo on first connection — fixes garbled display on macOS and any
+      # remote host that lacks the terminfo entry.
+      ssh = "kitten ssh";
       g = "git"; # enables `g st` etc. using defined git aliases
       open = "xdg-open"; # quick opener alias
       whatsapp = "google-chrome-stable --ozone-platform-hint=wayland --enable-features=UseOzonePlatform --app=https://web.whatsapp.com/";
