@@ -12,29 +12,14 @@
 # Config: /var/lib/hermes/.hermes/config.yaml (managed by NixOS)
 # Secrets: /etc/hermes-agent/secrets.env
 #
-# Missing upstream Nix deps workaround:
-# exa-py and playwright installed to /opt/hermes-extra-deps via pip.
-# PYTHONPATH set so hermes can find them.
+# exa-py fix: using fork until upstream merges PR #4649
+# Revert flake.nix to github:NousResearch/hermes-agent when merged.
 # Tracked: https://github.com/NousResearch/hermes-agent/issues/4648
 {
   inputs,
   pkgs,
   ...
-}: let
-  # Install missing Python deps that upstream hermes-agent flake doesn't include
-  installExtraDeps = pkgs.writeShellScript "install-hermes-extra-deps" ''
-    set -euo pipefail
-    DEST=/opt/hermes-extra-deps
-    MARKER="$DEST/.installed"
-    # Skip if already installed
-    [ -f "$MARKER" ] && exit 0
-    mkdir -p "$DEST"
-    # --no-deps: hermes env already has pydantic, httpx, requests etc.
-    # Only install the pure-Python packages that are missing.
-    ${pkgs.python312}/bin/python3 -m pip install --target "$DEST" --no-deps exa-py 2>/dev/null || true
-    touch "$MARKER"
-  '';
-in {
+}: {
   imports = [inputs.hermes-agent.nixosModules.default];
 
   services.hermes-agent = {
@@ -56,28 +41,7 @@ in {
     };
 
     environmentFiles = ["/etc/hermes-agent/secrets.env"];
-
-    environment = {
-      PYTHONPATH = "/opt/hermes-extra-deps";
-    };
   };
-
-  # Install missing Python deps before hermes starts
-  systemd.services.hermes-extra-deps = {
-    description = "Install missing hermes Python dependencies";
-    wantedBy = ["multi-user.target"];
-    before = ["hermes-agent.service"];
-    requiredBy = ["hermes-agent.service"];
-    path = [pkgs.python312 pkgs.python312Packages.pip];
-    serviceConfig = {
-      Type = "oneshot";
-      RemainAfterExit = true;
-      ExecStart = installExtraDeps;
-    };
-  };
-
-  # Also set PYTHONPATH for interactive CLI usage
-  environment.sessionVariables.PYTHONPATH = "/opt/hermes-extra-deps";
 
   # Symlink cloudgenius CLI .env to the vault-sourced secrets file.
   # cloudgenius is in the hermes group so can read the 640 root:hermes file.

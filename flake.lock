@@ -103,15 +103,16 @@
         "uv2nix": "uv2nix_2"
       },
       "locked": {
-        "lastModified": 1774911134,
-        "narHash": "sha256-z0Vt1T8hkJvwTq56XqbRGSqhvM0VbOjgsD6zq1CyInA=",
-        "owner": "NousResearch",
+        "lastModified": 1775159502,
+        "narHash": "sha256-6aPwRljesPc663hR1TnDq8FFvhMQGCLSLo0iY7IYEAA=",
+        "owner": "lvnilesh",
         "repo": "hermes-agent",
-        "rev": "275fcc66734ab9c1a09a7b54efe706342053ee46",
+        "rev": "d934923f58303c36837fca6215187fa728d5f6d0",
         "type": "github"
       },
       "original": {
-        "owner": "NousResearch",
+        "owner": "lvnilesh",
+        "ref": "fix/nix-add-exa-py-to-lockfile",
         "repo": "hermes-agent",
         "type": "github"
       }
