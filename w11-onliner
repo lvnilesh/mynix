@@ -225,8 +225,10 @@ fi
 # Create and start VM if it doesn't exist (after possible undefine above)
 if (( !VM_EXISTS )); then
 
-# Generate autounattend.xml with local account (bypass Microsoft account)
-FLOPPY_IMG=""
+# Generate autounattend.xml and inject it into a copy of the Windows ISO.
+# Windows PE on UEFI only reliably finds autounattend.xml on the boot media
+# itself — separate floppy/USB/CDROM approaches all fail.
+INSTALL_ISO="$ISO"
 if (( !NO_AUTOUNATTEND )); then
   echo "" >&2
   echo "Setting up local account: $LOCAL_USER" >&2
@@ -237,219 +239,79 @@ if (( !NO_AUTOUNATTEND )); then
     fi
   fi
 
-  AUTOUNATTEND_DIR=$(mktemp -d /tmp/${VM_NAME}-unattend-XXXX)
-  cat > "$AUTOUNATTEND_DIR/autounattend.xml" <<'XMLEOF'
+  WORK=$(mktemp -d /tmp/${VM_NAME}-repack-XXXX)
+  cat > "$WORK/autounattend.xml" <<XMLEOF
 <?xml version="1.0" encoding="utf-8"?>
-<unattend xmlns="urn:schemas-microsoft-com:unattend">
+<unattend xmlns="urn:schemas-microsoft-com:unattend" xmlns:wcm="http://schemas.microsoft.com/WMIConfig/2002/State">
   <settings pass="windowsPE">
-    <component name="Microsoft-Windows-International-Core-WinPE"
-               processorArchitecture="amd64"
-               publicKeyToken="31bf3856ad364e35"
-               language="neutral" versionScope="nonSxS">
-      <SetupUILanguage>
-        <UILanguage>en-US</UILanguage>
-      </SetupUILanguage>
-      <InputLocale>en-US</InputLocale>
-      <SystemLocale>en-US</SystemLocale>
-      <UILanguage>en-US</UILanguage>
-      <UserLocale>en-US</UserLocale>
+    <component name="Microsoft-Windows-International-Core-WinPE" processorArchitecture="amd64" publicKeyToken="31bf3856ad364e35" language="neutral" versionScope="nonSxS">
+      <SetupUILanguage><UILanguage>en-US</UILanguage></SetupUILanguage>
+      <InputLocale>en-US</InputLocale><SystemLocale>en-US</SystemLocale><UILanguage>en-US</UILanguage><UserLocale>en-US</UserLocale>
     </component>
-    <component name="Microsoft-Windows-PnpCustomizationsWinPE"
-               processorArchitecture="amd64"
-               publicKeyToken="31bf3856ad364e35"
-               language="neutral" versionScope="nonSxS">
+    <component name="Microsoft-Windows-PnpCustomizationsWinPE" processorArchitecture="amd64" publicKeyToken="31bf3856ad364e35" language="neutral" versionScope="nonSxS">
       <DriverPaths>
-        <PathAndCredentials wcm:action="add" wcm:keyValue="1">
-          <Path>D:\\viostor\\w11\\amd64</Path>
-        </PathAndCredentials>
-        <PathAndCredentials wcm:action="add" wcm:keyValue="2">
-          <Path>D:\\NetKVM\\w11\\amd64</Path>
-        </PathAndCredentials>
-        <PathAndCredentials wcm:action="add" wcm:keyValue="3">
-          <Path>D:\\viogpudo\\w11\\amd64</Path>
-        </PathAndCredentials>
-        <PathAndCredentials wcm:action="add" wcm:keyValue="4">
-          <Path>D:\\Balloon\\w11\\amd64</Path>
-        </PathAndCredentials>
-        <PathAndCredentials wcm:action="add" wcm:keyValue="5">
-          <Path>D:\\vioserial\\w11\\amd64</Path>
-        </PathAndCredentials>
-        <PathAndCredentials wcm:action="add" wcm:keyValue="6">
-          <Path>D:\\qxlwddm-dod\\w11\\amd64</Path>
-        </PathAndCredentials>
-        <PathAndCredentials wcm:action="add" wcm:keyValue="7">
-          <Path>E:\\viostor\\w11\\amd64</Path>
-        </PathAndCredentials>
-        <PathAndCredentials wcm:action="add" wcm:keyValue="8">
-          <Path>E:\\NetKVM\\w11\\amd64</Path>
-        </PathAndCredentials>
-        <PathAndCredentials wcm:action="add" wcm:keyValue="9">
-          <Path>E:\\viogpudo\\w11\\amd64</Path>
-        </PathAndCredentials>
-        <PathAndCredentials wcm:action="add" wcm:keyValue="10">
-          <Path>E:\\Balloon\\w11\\amd64</Path>
-        </PathAndCredentials>
-        <PathAndCredentials wcm:action="add" wcm:keyValue="11">
-          <Path>E:\\vioserial\\w11\\amd64</Path>
-        </PathAndCredentials>
-        <PathAndCredentials wcm:action="add" wcm:keyValue="12">
-          <Path>E:\\qxlwddm-dod\\w11\\amd64</Path>
-        </PathAndCredentials>
-        <PathAndCredentials wcm:action="add" wcm:keyValue="13">
-          <Path>F:\\viostor\\w11\\amd64</Path>
-        </PathAndCredentials>
-        <PathAndCredentials wcm:action="add" wcm:keyValue="14">
-          <Path>F:\\NetKVM\\w11\\amd64</Path>
-        </PathAndCredentials>
-        <PathAndCredentials wcm:action="add" wcm:keyValue="15">
-          <Path>F:\\viogpudo\\w11\\amd64</Path>
-        </PathAndCredentials>
-        <PathAndCredentials wcm:action="add" wcm:keyValue="16">
-          <Path>F:\\Balloon\\w11\\amd64</Path>
-        </PathAndCredentials>
-        <PathAndCredentials wcm:action="add" wcm:keyValue="17">
-          <Path>F:\\vioserial\\w11\\amd64</Path>
-        </PathAndCredentials>
-        <PathAndCredentials wcm:action="add" wcm:keyValue="18">
-          <Path>F:\\qxlwddm-dod\\w11\\amd64</Path>
-        </PathAndCredentials>
+        <PathAndCredentials wcm:action="add" wcm:keyValue="1"><Path>E:\viostor\w11\amd64</Path></PathAndCredentials>
+        <PathAndCredentials wcm:action="add" wcm:keyValue="2"><Path>E:\NetKVM\w11\amd64</Path></PathAndCredentials>
+        <PathAndCredentials wcm:action="add" wcm:keyValue="3"><Path>E:\viogpudo\w11\amd64</Path></PathAndCredentials>
       </DriverPaths>
     </component>
-    <component name="Microsoft-Windows-Setup"
-               processorArchitecture="amd64"
-               publicKeyToken="31bf3856ad364e35"
-               language="neutral" versionScope="nonSxS">
-      <DiskConfiguration>
-        <Disk wcm:action="add">
-          <DiskID>0</DiskID>
-          <WillWipeDisk>true</WillWipeDisk>
-          <CreatePartitions>
-            <CreatePartition wcm:action="add">
-              <Order>1</Order>
-              <Type>EFI</Type>
-              <Size>260</Size>
-            </CreatePartition>
-            <CreatePartition wcm:action="add">
-              <Order>2</Order>
-              <Type>MSR</Type>
-              <Size>128</Size>
-            </CreatePartition>
-            <CreatePartition wcm:action="add">
-              <Order>3</Order>
-              <Type>Primary</Type>
-              <Extend>true</Extend>
-            </CreatePartition>
-          </CreatePartitions>
-          <ModifyPartitions>
-            <ModifyPartition wcm:action="add">
-              <Order>1</Order>
-              <PartitionID>1</PartitionID>
-              <Format>FAT32</Format>
-              <Label>System</Label>
-            </ModifyPartition>
-            <ModifyPartition wcm:action="add">
-              <Order>2</Order>
-              <PartitionID>2</PartitionID>
-            </ModifyPartition>
-            <ModifyPartition wcm:action="add">
-              <Order>3</Order>
-              <PartitionID>3</PartitionID>
-              <Format>NTFS</Format>
-              <Label>Windows</Label>
-            </ModifyPartition>
-          </ModifyPartitions>
-        </Disk>
-      </DiskConfiguration>
-      <ImageInstall>
-        <OSImage>
-          <InstallFrom>
-            <MetaData wcm:action="add">
-              <Key>/IMAGE/NAME</Key>
-              <Value>Windows 11 Pro</Value>
-            </MetaData>
-          </InstallFrom>
-          <InstallTo>
-            <DiskID>0</DiskID>
-            <PartitionID>3</PartitionID>
-          </InstallTo>
-        </OSImage>
-      </ImageInstall>
-      <UserData>
-        <ProductKey>
-          <Key>VK7JG-NPHTM-C97JM-9MPGT-3V66T</Key>
-          <WillShowUI>OnError</WillShowUI>
-        </ProductKey>
-        <AcceptEula>true</AcceptEula>
-      </UserData>
-
+    <component name="Microsoft-Windows-Setup" processorArchitecture="amd64" publicKeyToken="31bf3856ad364e35" language="neutral" versionScope="nonSxS">
+      <DiskConfiguration><Disk wcm:action="add"><DiskID>0</DiskID><WillWipeDisk>true</WillWipeDisk>
+        <CreatePartitions>
+          <CreatePartition wcm:action="add"><Order>1</Order><Type>EFI</Type><Size>260</Size></CreatePartition>
+          <CreatePartition wcm:action="add"><Order>2</Order><Type>MSR</Type><Size>128</Size></CreatePartition>
+          <CreatePartition wcm:action="add"><Order>3</Order><Type>Primary</Type><Extend>true</Extend></CreatePartition>
+        </CreatePartitions>
+        <ModifyPartitions>
+          <ModifyPartition wcm:action="add"><Order>1</Order><PartitionID>1</PartitionID><Format>FAT32</Format><Label>System</Label></ModifyPartition>
+          <ModifyPartition wcm:action="add"><Order>2</Order><PartitionID>2</PartitionID></ModifyPartition>
+          <ModifyPartition wcm:action="add"><Order>3</Order><PartitionID>3</PartitionID><Format>NTFS</Format><Label>Windows</Label></ModifyPartition>
+        </ModifyPartitions>
+      </Disk></DiskConfiguration>
+      <ImageInstall><OSImage>
+        <InstallFrom><MetaData wcm:action="add"><Key>/IMAGE/NAME</Key><Value>Windows 11 Pro</Value></MetaData></InstallFrom>
+        <InstallTo><DiskID>0</DiskID><PartitionID>3</PartitionID></InstallTo>
+      </OSImage></ImageInstall>
+      <UserData><ProductKey><Key>VK7JG-NPHTM-C97JM-9MPGT-3V66T</Key><WillShowUI>OnError</WillShowUI></ProductKey><AcceptEula>true</AcceptEula></UserData>
     </component>
   </settings>
   <settings pass="specialize">
-    <component name="Microsoft-Windows-Deployment"
-               processorArchitecture="amd64"
-               publicKeyToken="31bf3856ad364e35"
-               language="neutral" versionScope="nonSxS">
+    <component name="Microsoft-Windows-International-Core" processorArchitecture="amd64" publicKeyToken="31bf3856ad364e35" language="neutral" versionScope="nonSxS">
+      <InputLocale>en-US</InputLocale><SystemLocale>en-US</SystemLocale><UILanguage>en-US</UILanguage><UserLocale>en-US</UserLocale>
+    </component>
+    <component name="Microsoft-Windows-Deployment" processorArchitecture="amd64" publicKeyToken="31bf3856ad364e35" language="neutral" versionScope="nonSxS">
       <RunSynchronous>
-        <RunSynchronousCommand wcm:action="add">
-          <Order>1</Order>
+        <RunSynchronousCommand wcm:action="add"><Order>1</Order>
           <Path>reg add HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\OOBE /v BypassNRO /t REG_DWORD /d 1 /f</Path>
-          <Description>Bypass Microsoft account requirement</Description>
+        </RunSynchronousCommand>
+        <RunSynchronousCommand wcm:action="add"><Order>2</Order>
+          <Path>cmd /c mkdir C:\Windows\Panther 2>nul &amp; copy /y D:\autounattend.xml C:\Windows\Panther\unattend.xml</Path>
         </RunSynchronousCommand>
       </RunSynchronous>
     </component>
-    <component name="Microsoft-Windows-Shell-Setup"
-               processorArchitecture="amd64"
-               publicKeyToken="31bf3856ad364e35"
-               language="neutral" versionScope="nonSxS">
-      <ComputerName>__HOSTNAME__</ComputerName>
+    <component name="Microsoft-Windows-Shell-Setup" processorArchitecture="amd64" publicKeyToken="31bf3856ad364e35" language="neutral" versionScope="nonSxS">
+      <ComputerName>${HOSTNAME_OVERRIDE}</ComputerName>
     </component>
   </settings>
   <settings pass="oobeSystem">
-    <component name="Microsoft-Windows-Shell-Setup"
-               processorArchitecture="amd64"
-               publicKeyToken="31bf3856ad364e35"
-               language="neutral" versionScope="nonSxS">
-      <OOBE>
-        <HideEULAPage>true</HideEULAPage>
-        <HideWirelessSetupInOOBE>true</HideWirelessSetupInOOBE>
-        <ProtectYourPC>3</ProtectYourPC>
-      </OOBE>
-      <UserAccounts>
-        <LocalAccounts>
-          <LocalAccount wcm:action="add">
-            <Name>__LOCAL_USER__</Name>
-            <Group>Administrators</Group>
-            <Password>
-              <Value>__LOCAL_PASS__</Value>
-              <PlainText>true</PlainText>
-            </Password>
-          </LocalAccount>
-        </LocalAccounts>
-      </UserAccounts>
-      <AutoLogon>
-        <Enabled>true</Enabled>
-        <Username>__LOCAL_USER__</Username>
-        <Password>
-          <Value>__LOCAL_PASS__</Value>
-          <PlainText>true</PlainText>
-        </Password>
-        <LogonCount>1</LogonCount>
+    <component name="Microsoft-Windows-International-Core" processorArchitecture="amd64" publicKeyToken="31bf3856ad364e35" language="neutral" versionScope="nonSxS">
+      <InputLocale>en-US</InputLocale><SystemLocale>en-US</SystemLocale><UILanguage>en-US</UILanguage><UserLocale>en-US</UserLocale>
+    </component>
+    <component name="Microsoft-Windows-Shell-Setup" processorArchitecture="amd64" publicKeyToken="31bf3856ad364e35" language="neutral" versionScope="nonSxS">
+      <OOBE><HideEULAPage>true</HideEULAPage><HideOEMRegistrationScreen>true</HideOEMRegistrationScreen><HideOnlineAccountScreens>true</HideOnlineAccountScreens><HideWirelessSetupInOOBE>true</HideWirelessSetupInOOBE><ProtectYourPC>3</ProtectYourPC></OOBE>
+      <UserAccounts><LocalAccounts><LocalAccount wcm:action="add">
+        <Name>${LOCAL_USER}</Name><Group>Administrators</Group>
+        <Password><Value>${LOCAL_PASS}</Value><PlainText>true</PlainText></Password>
+      </LocalAccount></LocalAccounts></UserAccounts>
+      <AutoLogon><Enabled>true</Enabled><Username>${LOCAL_USER}</Username>
+        <Password><Value>${LOCAL_PASS}</Value><PlainText>true</PlainText></Password><LogonCount>1</LogonCount>
       </AutoLogon>
       <FirstLogonCommands>
-        <SynchronousCommand wcm:action="add">
-          <Order>1</Order>
+        <SynchronousCommand wcm:action="add"><Order>1</Order>
           <CommandLine>cmd /c for %d in (D E F) do if exist %d:\virtio-win-guest-tools.exe start /wait %d:\virtio-win-guest-tools.exe /quiet /norestart</CommandLine>
-          <Description>Install virtio-win guest tools (includes QEMU guest agent)</Description>
         </SynchronousCommand>
-        <SynchronousCommand wcm:action="add">
-          <Order>2</Order>
-          <CommandLine>cmd /c for %d in (D E F) do if exist %d:\guest-agent\qemu-ga-x86_64.msi msiexec /i %d:\guest-agent\qemu-ga-x86_64.msi /quiet /norestart</CommandLine>
-          <Description>Install QEMU guest agent (fallback if not in guest tools)</Description>
-        </SynchronousCommand>
-        <SynchronousCommand wcm:action="add">
-          <Order>3</Order>
+        <SynchronousCommand wcm:action="add"><Order>2</Order>
           <CommandLine>powershell -Command "Set-Service -Name QEMU-GA -StartupType Automatic; Start-Service QEMU-GA -ErrorAction SilentlyContinue"</CommandLine>
-          <Description>Ensure QEMU guest agent service is running</Description>
         </SynchronousCommand>
       </FirstLogonCommands>
     </component>
@@ -457,142 +319,84 @@ if (( !NO_AUTOUNATTEND )); then
 </unattend>
 XMLEOF
 
-  # Patch in username and password (avoid sed delimiter issues with passwords)
-  python3 -c "
-import sys
-with open('$AUTOUNATTEND_DIR/autounattend.xml') as f:
-    xml = f.read()
-xml = xml.replace('__LOCAL_USER__', sys.argv[1])
-xml = xml.replace('__LOCAL_PASS__', sys.argv[2])
-xml = xml.replace('__HOSTNAME__', sys.argv[3])
-with open('$AUTOUNATTEND_DIR/autounattend.xml', 'w') as f:
-    f.write(xml)
-" "$LOCAL_USER" "$LOCAL_PASS" "$HOSTNAME_OVERRIDE"
+  # Extract ISO, inject autounattend.xml, repack with UEFI boot
+  echo "Extracting Windows ISO..." >&2
+  mkdir -p "$WORK/iso"
+  _mnt=$(mktemp -d)
+  sudo mount -o loop,ro "$ISO" "$_mnt"
+  sudo cp -a "$_mnt"/. "$WORK/iso/"
+  sudo umount "$_mnt"; rmdir "$_mnt"
+  sudo cp "$WORK/autounattend.xml" "$WORK/iso/autounattend.xml"
 
-  # Add wcm namespace to unattend tag
-  sed -i 's|<unattend xmlns="urn:schemas-microsoft-com:unattend">|<unattend xmlns="urn:schemas-microsoft-com:unattend" xmlns:wcm="http://schemas.microsoft.com/WMIConfig/2002/State">|' "$AUTOUNATTEND_DIR/autounattend.xml"
-
-  # Create floppy image with autounattend.xml
-  FLOPPY_IMG=$(mktemp /tmp/${VM_NAME}-unattend-XXXX.img)
-  dd if=/dev/zero of="$FLOPPY_IMG" bs=1440K count=1 2>/dev/null
-  mkfs.fat -F 12 "$FLOPPY_IMG" >/dev/null 2>&1
-  mcopy -i "$FLOPPY_IMG" "$AUTOUNATTEND_DIR/autounattend.xml" ::autounattend.xml
-  echo "Created unattend floppy with local account '$LOCAL_USER'" >&2
-  rm -rf "$AUTOUNATTEND_DIR"
+  INSTALL_ISO="/var/lib/libvirt/boot/${VM_NAME}-unattended.iso"
+  echo "Repacking ISO with autounattend.xml..." >&2
+  sudo xorriso -as mkisofs \
+    -no-emul-boot \
+    -e efi/microsoft/boot/efisys.bin \
+    -boot-load-size 4 \
+    -iso-level 3 \
+    -J -joliet-long \
+    -V "CCCOMA_X64FRE_EN-US_DV9" \
+    -o "$INSTALL_ISO" \
+    "$WORK/iso/" 2>&1 | grep -E '^(Writing|xorriso : UPDATE)' >&2 || true
+  sudo rm -rf "$WORK"
+  echo "Created unattended ISO: $INSTALL_ISO" >&2
 fi
 
-TMP_XML=$(mktemp /tmp/${VM_NAME}-XXXX.xml)
-cat > "$TMP_XML" <<EOF
-<domain type='kvm'>
-  <name>$VM_NAME</name>
-  <memory unit='MiB'>16384</memory>
-  <currentMemory unit='MiB'>16384</currentMemory>
-  <vcpu placement='static'>8</vcpu>
-  <cpu mode='host-passthrough'>
-    <topology sockets='1' cores='8' threads='1'/>
-    <feature policy='require' name='topoext'/>
-  </cpu>
-  <os>
-    <type arch='x86_64' machine='pc-q35-8.2'>hvm</type>
-  <loader readonly='yes' type='pflash' format='raw'>$CODE_FW</loader>
-  <nvram template='$VARS_TMPL'>$NVRAM</nvram>
-  </os>
-  <features>
-    <acpi/>
-    <apic/>
-    <hyperv>
-      <relaxed state='on'/>
-      <vapic state='on'/>
-      <spinlocks state='on' retries='8191'/>
-    </hyperv>
-    <kvm><hidden state='on'/></kvm>
-    <vmport state='off'/>
-    <smm state='on'/>
-  </features>
-  <clock offset='localtime'>
-    <timer name='rtc' tickpolicy='catchup'/>
-    <timer name='hpet' present='no'/>
-  </clock>
-  <on_poweroff>destroy</on_poweroff>
-  <on_reboot>restart</on_reboot>
-  <on_crash>restart</on_crash>
-  <devices>
-    <emulator>/run/libvirt/nix-emulators/qemu-system-x86_64</emulator>
-    <disk type='file' device='disk'>
-      <driver name='qemu' type='qcow2' cache='none' discard='unmap'/>
-      <source file='$DISK'/>
-      <target dev='$([ "$DISK_BUS" = virtio ] && echo vda || echo sda)' bus='$DISK_BUS'/>
-      <boot order='1'/>
-    </disk>
-    <disk type='file' device='cdrom'>
-      <driver name='qemu' type='raw'/>
-      <source file='$ISO'/>
-      <target dev='$([ "$DISK_BUS" = virtio ] && echo sdb || echo sdc)' bus='sata'/>
-      <readonly/>
-      <boot order='2'/>
-    </disk>
-$(
-  if [[ -n "$DRIVERS_ISO" ]]; then
-    cat <<DRIVE
-    <disk type='file' device='cdrom'>
-      <driver name='qemu' type='raw'/>
-      <source file='$DRIVERS_ISO'/>
-      <target dev='$([ "$DISK_BUS" = virtio ] && echo sdc || echo sdb)' bus='sata'/>
-      <readonly/>
-    </disk>
-DRIVE
-  fi)
-    <controller type='usb' model='qemu-xhci'/>
-    <interface type='network'>
-      <source network='br0'/>
-      <model type='virtio'/>
-    </interface>
-    <tpm model='tpm-crb'>
-      <backend type='emulator' version='2.0'/>
-    </tpm>
-    <input type='tablet' bus='usb'/>
-    <input type='keyboard' bus='usb'/>
-    <graphics type='vnc' port='-1' autoport='yes' listen='0.0.0.0'/>
-    <video><model type='qxl' ram='65536' vram='65536' vgamem='16384' heads='1'/></video>
-    <channel type='unix'>
-      <target type='virtio' name='org.qemu.guest_agent.0'/>
-    </channel>
-    <rng model='virtio'>
-      <backend model='random'>/dev/urandom</backend>
-    </rng>
-$(
-  if [[ -n "$FLOPPY_IMG" ]]; then
-    cat <<FLOPPY
-    <disk type='file' device='floppy'>
-      <driver name='qemu' type='raw'/>
-      <source file='$FLOPPY_IMG'/>
-      <target dev='fda' bus='fdc'/>
-      <readonly/>
-    </disk>
-FLOPPY
-  fi)
-  </devices>
-</domain>
-EOF
+# Use virt-install for proper UEFI boot setup (handles NVRAM and boot order correctly)
+VIRT_CMD=(
+  sudo virt-install --connect qemu:///system
+  --name "$VM_NAME"
+  --memory 16384
+  --vcpus 8
+  --cpu host-passthrough
+  --os-variant win11
+  --boot uefi
+  --disk "path=$DISK,format=qcow2,bus=$DISK_BUS,cache=none,discard=unmap"
+  --cdrom "$INSTALL_ISO"
+  --network network=br0,model=virtio
+  --graphics vnc,listen=0.0.0.0
+  --video qxl
+  --tpm backend.type=emulator,backend.version=2.0,model=tpm-crb
+  --channel unix,target.type=virtio,target.name=org.qemu.guest_agent.0
+  --input tablet,bus=usb
+  --input keyboard,bus=usb
+  --rng /dev/urandom
+  --noautoconsole
+)
+if [[ -n "$DRIVERS_ISO" ]]; then
+  VIRT_CMD+=(--disk "$DRIVERS_ISO,device=cdrom,bus=sata")
+fi
 
-echo "Defining domain via virsh XML: $TMP_XML"
-sudo virsh -c qemu:///system define "$TMP_XML" >/dev/null
-echo "Starting domain $VM_NAME"
-if ! sudo virsh -c qemu:///system start "$VM_NAME"; then
-  echo "Start failed. Attempting fallback: remove stale NVRAM and recreate via template." >&2
-  sudo rm -f "$NVRAM" || true
-  # Regenerate XML with same template attribute
-  sudo virsh -c qemu:///system undefine "$VM_NAME" --nvram || true
-  sudo virsh -c qemu:///system define "$TMP_XML" >/dev/null
-  if sudo virsh -c qemu:///system start "$VM_NAME"; then
-    echo "VM $VM_NAME started after NVRAM fallback."
-    VM_RUNNING=1
-  else
-    echo "Failed again after fallback." >&2; exit 1
+echo "Creating $VM_NAME with virt-install" >&2
+"${VIRT_CMD[@]}" || { echo "virt-install failed." >&2; exit 1; }
+
+# virt-install sets on_reboot=destroy to prevent install boot loops.
+# Override to restart so Windows can reboot through all setup phases
+# (file copy -> specialize -> OOBE) without shutting down.
+sudo virsh -c qemu:///system dumpxml "$VM_NAME" > /tmp/${VM_NAME}-fixreboot.xml
+sed -i 's|<on_reboot>destroy</on_reboot>|<on_reboot>restart</on_reboot>|' /tmp/${VM_NAME}-fixreboot.xml
+sudo virsh -c qemu:///system define /tmp/${VM_NAME}-fixreboot.xml >/dev/null
+rm -f /tmp/${VM_NAME}-fixreboot.xml
+
+# Send keypresses to dismiss "Press any key to boot from CD/DVD" prompt.
+# After install reboots, the "press any key" times out and falls through to disk.
+( for _i in $(seq 1 10); do sleep 2; sudo virsh send-key "$VM_NAME" KEY_ENTER 2>/dev/null; done ) &
+
+# Wait for Windows to finish installing (multiple reboots + OOBE + shutdown).
+# When the VM shuts down after OOBE, start it for the final boot to desktop.
+echo "VM $VM_NAME started. Waiting for install to complete..." >&2
+while true; do
+  sleep 15
+  _state=$(sudo virsh domstate "$VM_NAME" 2>/dev/null || true)
+  if [[ "$_state" == "shut off" ]]; then
+    echo "Install completed. Starting $VM_NAME..." >&2
+    sudo virsh start "$VM_NAME" >/dev/null 2>&1
+    break
   fi
-fi
-echo "VM $VM_NAME started. Connect with: virt-viewer --connect qemu:///system $VM_NAME"
-  VM_RUNNING=1
+done
+echo "VM $VM_NAME is running. Connect with: virt-viewer --connect qemu:///system $VM_NAME" >&2
+VM_RUNNING=1
 fi  # end of !VM_EXISTS block
 
 # --- Post-install provisioning ---
