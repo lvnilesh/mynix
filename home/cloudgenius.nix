@@ -108,7 +108,7 @@
       #   284=VolUp — KEY_VOLUMEUP (works)
       divert-keys: {226: 0, 227: 0, 229: 0, 231: 0, 232: 0, 233: 0, 259: 0, 264: 0, 266: 0, 279: 0, 284: 0}
       fn-swap: true                     # true = F-keys are primary, Fn+F-key for media (swap Fx function)
-      multiplatform: 0                  # OS mode: 0 = MacOS layout (see solaar GUI to change)
+      multiplatform: 1                  # OS mode: 0=Linux 1=MacOS 2=iOS 3=Chrome (no Windows on this KB; MacOS keeps Super left of spacebar)
     # ── MX Master 3S (mouse) ────────────────────────────────────────────
     - _NAME: MX Master 3S
       _modelId: B03400000000            # hardware model ID
