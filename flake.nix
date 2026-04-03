@@ -12,9 +12,7 @@
     };
 
     hermes-agent = {
-      # TEMP: using fork with exa-py fix until upstream merges PR #4649
-      # Revert to: url = "github:NousResearch/hermes-agent";
-      url = "github:lvnilesh/hermes-agent/fix/nix-add-exa-py-to-lockfile";
+      url = "github:NousResearch/hermes-agent";
       inputs.nixpkgs.follows = "nixpkgs";
     };
   };
