@@ -1,0 +1,55 @@
+#!/usr/bin/env bash
+# Switch default audio sink or source via wofi
+set -euo pipefail
+
+WOFI_OPTS="--dmenu --conf $HOME/mynix/dotfiles/wofi/config --style $HOME/mynix/dotfiles/wofi/style.css"
+
+MODE=$(echo -e "Output (Speaker/Headphones)\nInput (Microphone)" | wofi $WOFI_OPTS --prompt "Audio" 2>/dev/null) || exit 0
+
+sleep 0.2  # allow wofi to fully close before reopening
+case "$MODE" in
+    "Output (Speaker/Headphones)") SECTION="Sinks" ;;
+    "Input (Microphone)") SECTION="Sources" ;;
+    *) exit 0 ;;
+esac
+
+# Parse wpctl status for the chosen section
+STATUS=$(wpctl status)
+MENU=""
+declare -a IDS=()
+declare -a NAMES=()
+IDX=0
+
+while IFS= read -r line; do
+    if [[ "$line" =~ ^[│[:space:]]+(\*?)\ *([0-9]+)\.\  ]]; then
+        is_default="${BASH_REMATCH[1]}"
+        id="${BASH_REMATCH[2]}"
+        name=$(echo "$line" | sed 's/.*[0-9]\+\. //' | sed 's/ \[.*//')
+        IDS+=("$id")
+        NAMES+=("$name")
+        if [ "$is_default" = "*" ]; then
+            MENU+="► $name\n"
+        else
+            MENU+="  $name\n"
+        fi
+        IDX=$((IDX + 1))
+    fi
+done < <(echo "$STATUS" | sed -n "/├─ $SECTION:/,/├─/{ /├─/d; /^$/d; p }")
+
+if [ $IDX -eq 0 ]; then
+    notify-send "Audio Switch" "No devices found"
+    exit 1
+fi
+
+CHOICE=$(echo -e "$MENU" | wofi $WOFI_OPTS --prompt "$SECTION" 2>/dev/null) || exit 0
+
+# Find the matching device name
+CHOSEN_NAME=$(echo "$CHOICE" | sed 's/^[► ]*//')
+
+for i in "${!NAMES[@]}"; do
+    if [ "${NAMES[$i]}" = "$CHOSEN_NAME" ]; then
+        wpctl set-default "${IDS[$i]}"
+        notify-send "Audio Switch" "Default: $CHOSEN_NAME"
+        exit 0
+    fi
+done

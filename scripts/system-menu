@@ -18,7 +18,7 @@ style_menu() {
 }
 
 system_menu() {
-    echo -e "System Monitor (btop)\nDisk Usage\nNetwork (nmtui)\nBluetooth\nAudio (pavucontrol)\nScreenshot\nScreen Record Toggle" | wofi $WOFI_OPTS 2>/dev/null
+    echo -e "System Monitor (btop)\nDisk Usage\nNetwork (nmtui)\nBluetooth\nAudio Switch\nAudio (pavucontrol)\nScreenshot\nScreen Record Toggle" | wofi $WOFI_OPTS 2>/dev/null
 }
 
 media_menu() {
@@ -61,6 +61,7 @@ case "$CHOICE" in
             "Disk Usage") kitty --class=diskusage -e bash -c 'df -h; echo; du -sh ~/* 2>/dev/null | sort -rh | head -20; read -p "Press enter..."' ;;
             "Network (nmtui)") kitty --class=nmtui -e nmtui ;;
             Bluetooth) blueman-manager ;;
+            "Audio Switch") "$SCRIPTS/audio-switch" ;;
             "Audio (pavucontrol)") pavucontrol ;;
             Screenshot) hyprshot -m region -c ;;
             "Screen Record Toggle") "$SCRIPTS/screen-record-toggle" ;;
