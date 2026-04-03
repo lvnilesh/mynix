@@ -287,6 +287,8 @@ in {
     hyprlock
     hypridle
     swayosd
+    bemoji
+    wtype
     cliphist
     wl-clipboard
     wf-recorder

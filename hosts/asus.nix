@@ -34,6 +34,7 @@
     ./common/serial-perms.nix
     ./common/brother-printer.nix
     ./common/rgb.nix
+    ./common/logitech.nix
     ./asus/llamacpp.nix
     ./common/ollama.nix
     ./asus/hermes-agent.nix

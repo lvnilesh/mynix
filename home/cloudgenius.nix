@@ -63,6 +63,76 @@
   # Symlink the Nordic Kvantum theme from the nordic package
   xdg.configFile."Kvantum/Nordic-Darker".source = "${pkgs.nordic}/share/Kvantum/Nordic-Darker";
 
+  # Solaar config for Logitech Bolt receiver (paired devices below).
+  # Solaar persists device settings here; Home Manager owns this file.
+  # To find key IDs: `solaar config "DEVICE" divert-keys`
+  # To find available settings: `solaar config "DEVICE"`
+  # After changing values here, rebuild + restart solaar for them to take effect.
+  xdg.configFile."solaar/config.yaml".force = true;
+  xdg.configFile."solaar/config.yaml".text = ''
+    - 1.1.19
+    # ── MX Keys Mini (keyboard) ──────────────────────────────────────────
+    - _NAME: MX Keys Mini
+      # _absent: features this device does NOT support (solaar skips them)
+      _absent: [hi-res-scroll, lowres-scroll-mode, hires-smooth-invert, hires-smooth-resolution, hires-scroll-mode, scroll-ratchet, scroll-ratchet-torque, smart-shift,
+        thumb-scroll-invert, thumb-scroll-mode, onboard_profiles, report_rate, report_rate_extended, pointer_speed, dpi, dpi_extended, speed-change, backlight-timed,
+        led_control, led_zone_, rgb_control, rgb_zone_, brightness_control, per-key-lighting, reprogrammable-keys, persistent-remappable-keys, force-sensing,
+        crown-smooth, divert-crown, divert-gkeys, m-key-leds, mr-key-led, gesture2-gestures, gesture2-divert, gesture2-params, haptic-level, haptic-play, sidetone,
+        equalizer, adc_power_management]
+      _battery: 4100                    # last-seen battery level (solaar internal)
+      _modelId: B36900000000            # hardware model ID
+      _sensitive: {hires-scroll-mode: ignore, hires-smooth-invert: ignore, hires-smooth-resolution: ignore}
+      _serial: 56ABC2DE                 # device serial number
+      _unitId: 56ABC2DE                 # device unit ID
+      _wpid: B369                       # wireless PID
+      backlight: 1                      # backlight mode: 1 = automatic
+      backlight_duration_hands_in: 30   # seconds backlight stays on after typing
+      backlight_duration_hands_out: 30  # seconds backlight stays on after hands leave
+      backlight_duration_powered: 300   # seconds backlight stays on when plugged in
+      backlight_level: 3                # brightness level (0-5)
+      change-host: null                 # don't auto-switch host on startup
+      # disable-keyboard-keys: 1=CapsLock, 8=Insert, 16=Win — all enabled (false)
+      disable-keyboard-keys: {1: false, 8: false, 16: false}
+      # divert-keys: 0 = Regular (OS gets the keypress), 1 = Diverted (solaar intercepts)
+      # ALL set to Regular — Solaar divert is useless on Wayland.
+      # In Regular mode with MacOS layout (multiplatform: 0):
+      #   226=Backlight Down, 227=Backlight Up — firmware-handled (no HID event)
+      #   229=Dictation — DEAD: no HID event in Regular mode on Wayland
+      #   231=Emoji — sends Super+Ctrl+Space (bound in hyprland.conf → bemoji)
+      #   232=ScreenCapture — sends Super+Shift+4 (bound in hyprland.conf → hyprshot)
+      #   233=MicMute — DEAD: no HID event in Regular mode on Wayland
+      #   259=Play/Pause — KEY_PLAYPAUSE (works)
+      #   264=Mute — KEY_MUTE (works)
+      #   266=VolDown — KEY_VOLUMEDOWN (works)
+      #   279=Delete — standard Delete key
+      #   284=VolUp — KEY_VOLUMEUP (works)
+      divert-keys: {226: 0, 227: 0, 229: 0, 231: 0, 232: 0, 233: 0, 259: 0, 264: 0, 266: 0, 279: 0, 284: 0}
+      fn-swap: true                     # true = F-keys are primary, Fn+F-key for media (swap Fx function)
+      multiplatform: 0                  # OS mode: 0 = MacOS layout (see solaar GUI to change)
+    # ── MX Master 3S (mouse) ────────────────────────────────────────────
+    - _NAME: MX Master 3S
+      _modelId: B03400000000            # hardware model ID
+      _serial: 6EAB6B99                 # device serial number
+      _unitId: 6EAB6B99                 # device unit ID
+      _wpid: B034                       # wireless PID
+      # DPI: 200-8000 in steps of 50. Set device DPI to desired speed, keep
+      # Hyprland sensitivity at 0 (no software scaling) for full sensor precision.
+      # Try 1600/2400/3200 if too fast or slow.
+      dpi: 2400
+      # scroll-ratchet: Ratcheted = clicky detents, Freespinning = free scroll
+      scroll-ratchet: Ratcheted
+      # smart-shift: speed threshold (1-50) to auto-switch ratchet→freespin.
+      # Lower = easier to trigger freespin. 50 = always ratcheted.
+      smart-shift: 12
+      # divert-keys: 0 = Regular (OS gets the click), 1 = Diverted (solaar rules handle it)
+      #   82 = Middle Button:    Regular — normal middle-click
+      #   83 = Back Button:      Regular — browser back (was Diverted, broke navigation)
+      #   86 = Forward Button:   Regular — browser forward
+      #  195 = Gesture Button:   Regular — sends mouse:277, bound in Hyprland to clipboard history
+      #  196 = Smart Shift:      Diverted — ratchet/freespin toggle via solaar firmware
+      divert-keys: {82: 0, 83: 0, 86: 0, 195: 0, 196: 1}
+  '';
+
   # GTK4 gtk.css is managed by theme-switch script (not HM) for live theme switching
 
   home.packages = with pkgs; [

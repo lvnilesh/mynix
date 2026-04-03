@@ -27,7 +27,7 @@ SUPER + Arrows         Move focus
 SUPER + Mouse L/R      Move/resize window
 ── Workspaces ─────────────────────────────
 SUPER + 1-9            Switch workspace
-SUPER + SHIFT + 1-9    Move window to workspace
+SUPER + ALT + 1-9      Move window to workspace
 SUPER + [ / ]          Prev/next workspace
 SUPER + SHIFT + [ / ]  Move to prev/next monitor
 SUPER + Scroll          Scroll workspaces
@@ -36,9 +36,11 @@ SUPER + SHIFT + S      Move to scratchpad
 ── Screen & Security ──────────────────────
 SUPER + L              Lock screen
 SUPER + SHIFT + R      Toggle screen recording
-F8                     Screenshot region → clipboard
+F8 / Screenshot Key    Screenshot region → clipboard
 ── Clipboard & Media ──────────────────────
 SUPER + SHIFT + V      Clipboard history
+Mouse Thumb Button     Clipboard history
+SUPER + CTRL + SPACE   Emoji picker (Emoji key)
 Media Keys             Volume/brightness (SwayOSD)
 ── System ─────────────────────────────────
 SUPER + R              Restart waybar
