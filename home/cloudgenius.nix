@@ -130,6 +130,11 @@
       #   86 = Forward Button:   Regular — browser forward
       #  195 = Gesture Button:   Regular — sends mouse:277, bound in Hyprland to clipboard history
       #  196 = Smart Shift:      Diverted — ratchet/freespin toggle via solaar firmware
+      # thumb-scroll-mode: false = thumb wheel sends normal horizontal scroll to compositor.
+      # true = Diverted (sends HID++ to Solaar rules, breaks horizontal scrolling in apps).
+      thumb-scroll-mode: false
+      # hires-scroll-mode: false = main wheel sends normal scroll to compositor.
+      hires-scroll-mode: false
       divert-keys: {82: 0, 83: 0, 86: 0, 195: 0, 196: 1}
   '';
 
