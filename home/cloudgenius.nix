@@ -254,6 +254,7 @@
       "clara-staging" = {user = "cloudgenius";};
       "docker-host" = {user = "cloudgenius";};
       "actions-runner" = {user = "cloudgenius";};
+      "apps" = {user = "cloudgenius";};
       "t" = {user = "cloudgenius";};
       "u1.tail52f7b.ts.net" = {};
       "echo" = {
