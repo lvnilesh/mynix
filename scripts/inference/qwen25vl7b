@@ -1,0 +1,28 @@
+#!/run/current-system/sw/bin/bash
+set -euo pipefail
+export CUDA_VISIBLE_DEVICES=0
+
+MODEL_PATH="/home/cloudgenius/inference/models/qwen25-vl-7b/Qwen2.5-VL-7B-Instruct-Q4_K_M.gguf"
+MMPROJ_PATH="/home/cloudgenius/inference/models/qwen25-vl-7b/mmproj-F16.gguf"
+
+if [[ ! -f "$MODEL_PATH" ]]; then
+    echo "Error: Model not found: $MODEL_PATH" >&2
+    exit 1
+fi
+if [[ ! -f "$MMPROJ_PATH" ]]; then
+    echo "Error: Multimodal projector not found: $MMPROJ_PATH" >&2
+    exit 1
+fi
+
+/home/cloudgenius/inference/llama.cpp/build/bin/llama-server \
+    --model "$MODEL_PATH" \
+    --mmproj "$MMPROJ_PATH" \
+    --alias qwen2.5-vl-7b \
+    --host 0.0.0.0 \
+    --port 8001 \
+    --n-gpu-layers 99 \
+    --flash-attn on \
+    --ctx-size 8192 \
+    --parallel 2 \
+    --batch-size 2048 \
+    --ubatch-size 512

@@ -1,6 +1,6 @@
 #!/run/current-system/sw/bin/bash
 set -euo pipefail
-export CUDA_VISIBLE_DEVICES=1
+export CUDA_VISIBLE_DEVICES=0
 
 MODEL_PATH="/home/cloudgenius/inference/models/nomic-embed/nomic-embed-text-v1.5.f16.gguf"
 

@@ -1,0 +1,28 @@
+#!/run/current-system/sw/bin/bash
+set -euo pipefail
+export CUDA_VISIBLE_DEVICES=0
+
+MODEL_PATH="/home/cloudgenius/inference/models/llava-v1.6-vicuna-13b/llava-v1.6-vicuna-13b.Q4_K_M.gguf"
+MMPROJ_PATH="/home/cloudgenius/inference/models/llava-v1.6-vicuna-13b/mmproj-model-f16.gguf"
+
+if [[ ! -f "$MODEL_PATH" ]]; then
+    echo "Error: Model not found: $MODEL_PATH" >&2
+    exit 1
+fi
+if [[ ! -f "$MMPROJ_PATH" ]]; then
+    echo "Error: Multimodal projector not found: $MMPROJ_PATH" >&2
+    exit 1
+fi
+
+/home/cloudgenius/inference/llama.cpp/build/bin/llama-server \
+    --model "$MODEL_PATH" \
+    --mmproj "$MMPROJ_PATH" \
+    --alias llava-v1.6-13b \
+    --host 0.0.0.0 \
+    --port 8001 \
+    --n-gpu-layers 99 \
+    --flash-attn on \
+    --ctx-size 2048 \
+    --parallel 1 \
+    --batch-size 512 \
+    --ubatch-size 256
