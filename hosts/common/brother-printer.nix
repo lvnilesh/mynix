@@ -54,12 +54,9 @@
 
   # System packages for printer management
   environment.systemPackages = with pkgs; [
-    cups # Common Unix Printing System
-    system-config-printer # GUI printer configuration
-    ghostscript # PostScript interpreter
-    foomatic-db # Printer database
-    foomatic-db-ppds # Printer description files
-    gutenprint # High quality printer drivers
+    cups
+    ghostscript
+    gutenprint
   ];
 
   # User groups for printing
