@@ -4,10 +4,11 @@
   services.printing = {
     enable = true;
     drivers = with pkgs; [
-      # Brother printer drivers
-      brlaser # Open source Brother laser printer driver
-      brgenml1lpr # Brother generic LPR driver
-      brgenml1cupswrapper # Brother CUPS wrapper
+      brlaser
+      brgenml1lpr
+      brgenml1cupswrapper
+      gutenprint
+      gutenprintBin
     ];
 
     # Enable printer discovery and network printing
@@ -58,6 +59,21 @@
     ghostscript
     gutenprint
   ];
+
+  # Declarative printer: Brother HL-4070CDW direct IPP connection
+  # Monochrome default — change ColorModel to CMYK when color toners installed
+  hardware.printers = {
+    ensurePrinters = [
+      {
+        name = "Brother-Direct";
+        location = "Garage";
+        description = "Brother HL-4070CDW Direct";
+        deviceUri = "ipp://brother.cg.home.arpa:631/ipp";
+        model = "gutenprint.5.3://brother-hl-4040cn/expert";
+      }
+    ];
+    ensureDefaultPrinter = "Brother-Direct";
+  };
 
   # User groups for printing
   users.users.cloudgenius.extraGroups = ["lp"];
