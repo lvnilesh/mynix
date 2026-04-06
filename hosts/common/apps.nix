@@ -195,6 +195,7 @@ in {
     tldr
 
     # Development tools
+    uv
     gh
     platformio-core
     python3
@@ -267,7 +268,7 @@ in {
     efibootmgr
     mokutil
     efivar
-    blueman
+    # blueman  # disabled — causes BLE scan storm on dbus
 
     # Hyprland desktop
     waybar

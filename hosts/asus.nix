@@ -62,6 +62,7 @@
   programs.gpu-screen-recorder.enable = true;
   services.printing.enable = true;
   services.tailscale.enable = true;
+  hardware.bluetooth.enable = true;
   services.chatbot.enable = true;
   security.sudo.wheelNeedsPassword = false;
 

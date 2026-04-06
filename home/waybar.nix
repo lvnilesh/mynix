@@ -17,6 +17,22 @@
     };
   };
 
+  systemd.user.services.swayosd = {
+    Unit = {
+      Description = "SwayOSD on-screen display server";
+      After = ["graphical-session.target"];
+      PartOf = ["graphical-session.target"];
+    };
+    Service = {
+      ExecStart = "/run/current-system/sw/bin/swayosd-server";
+      Restart = "on-failure";
+      RestartSec = 2;
+    };
+    Install = {
+      WantedBy = ["graphical-session.target"];
+    };
+  };
+
   systemd.user.services.waybar = {
     Unit = {
       Description = "Waybar status bar";

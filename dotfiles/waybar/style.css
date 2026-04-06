@@ -8,7 +8,7 @@
 
 * {
   font-family: "JetBrainsMono Nerd Font", sans-serif;
-  font-size: 14px;
+  font-size: 24px;
   font-weight: 500;
   min-height: 0;
   border: none;
@@ -27,7 +27,7 @@
   margin: 0 3px;
   min-width: 16px;
   font-family: "JetBrainsMono Nerd Font", sans-serif;
-  font-size: 14px;
+  font-size: 24px;
   font-weight: 600;
   transition: all 0.15s ease;
 }
@@ -45,8 +45,9 @@
 /* ── Center ── */
 
 #clock {
-  font-weight: 600;
-  padding: 0 16px;
+  font-size: 24px;
+  font-weight: 700;
+  padding: 0 20px;
 }
 
 /* ── Right modules ── */

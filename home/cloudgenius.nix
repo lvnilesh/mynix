@@ -118,7 +118,7 @@
       # DPI: 200-8000 in steps of 50. Set device DPI to desired speed, keep
       # Hyprland sensitivity at 0 (no software scaling) for full sensor precision.
       # Try 1600/2400/3200 if too fast or slow.
-      dpi: 2400
+      dpi: 4000
       # scroll-ratchet: Ratcheted = clicky detents, Freespinning = free scroll
       scroll-ratchet: Ratcheted
       # smart-shift: speed threshold (1-50) to auto-switch ratchet→freespin.
