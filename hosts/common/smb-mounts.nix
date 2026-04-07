@@ -62,9 +62,9 @@
         echo "Mounting //$server/$share -> ''$targetDir"
         # Attempt mount with vers=3.0; fall back to 2.1 for older servers
         if ! "$MOUNT" -t cifs "//$server/$share" "''$targetDir" \
-          -o "credentials=${credentialsFile},uid=${user},gid=users,iocharset=utf8,vers=3.0,nounix,serverino" 2>/dev/null; then
+          -o "credentials=${credentialsFile},uid=${user},gid=users,iocharset=utf8,vers=3.0,nounix,serverino,_netdev,soft,timeo=10" 2>/dev/null; then
           "$MOUNT" -t cifs "//$server/$share" "''$targetDir" \
-            -o "credentials=${credentialsFile},uid=${user},gid=users,iocharset=utf8,vers=2.1,nounix,serverino" 2>/dev/null || rmdir "$targetDir" 2>/dev/null || true
+            -o "credentials=${credentialsFile},uid=${user},gid=users,iocharset=utf8,vers=2.1,nounix,serverino,_netdev,soft,timeo=10" 2>/dev/null || rmdir "$targetDir" 2>/dev/null || true
         fi
       done
     done
@@ -80,7 +80,9 @@ in {
     serviceConfig = {
       Type = "oneshot";
       ExecStart = "${mountHelper}/bin/mount-smb-shares";
+      ExecStop = "${pkgs.util-linux}/bin/umount -a -t cifs -l";
       RemainAfterExit = true;
+      TimeoutStopSec = "15s";
     };
   };
 

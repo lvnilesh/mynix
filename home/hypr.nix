@@ -9,6 +9,8 @@
   home.file.".config/hypr/hyprlock.conf".source = ../dotfiles/hyprlock.conf;
   home.file.".config/hypr/hypridle.conf".source = ../dotfiles/hypridle.conf;
 
+  home.file.".config/foot/foot.ini".source = ../dotfiles/foot/foot.ini;
+
   home.file.".config/walker/config.toml".source = ../dotfiles/walker/config.toml;
 
   home.file.".config/waybar/config".source = ../dotfiles/waybar/config;

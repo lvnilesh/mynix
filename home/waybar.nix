@@ -24,12 +24,15 @@
       PartOf = ["graphical-session.target"];
     };
     Service = {
+      # GTK4 Vulkan renderer fails on NVIDIA 580 (vkCreateDevice error);
+      # force GL renderer so SwayOSD actually paints instead of black.
+      Environment = ["GSK_RENDERER=gl"];
       ExecStart = "/run/current-system/sw/bin/swayosd-server";
       Restart = "on-failure";
       RestartSec = 2;
     };
     Install = {
-      WantedBy = ["graphical-session.target"];
+      WantedBy = ["graphical-session.target" "default.target"];
     };
   };
 

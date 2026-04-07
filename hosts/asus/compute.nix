@@ -9,5 +9,11 @@
   # NVIDIA DRM/KMS directly. Without it, Hyprland falls back to software cursor
   # and loses direct scanout.
   # nvidia-drm.fbdev=1: enable framebuffer device for console and GDM on NVIDIA.
-  boot.kernelParams = ["nvidia-drm.modeset=1" "nvidia-drm.fbdev=1"];
+  boot.kernelParams = [
+    "nvidia-drm.modeset=1"
+    "nvidia-drm.fbdev=1"
+    # Force EFI reboot — UEFI system; "bios" vector hangs after NVIDIA
+    # releases the framebuffer, "efi" lets firmware handle the reset.
+    "reboot=efi"
+  ];
 }

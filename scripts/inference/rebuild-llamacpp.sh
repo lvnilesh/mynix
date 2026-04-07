@@ -2,7 +2,8 @@
 set -euo pipefail
 
 cd ~/inference/llama.cpp
-echo "Pulling latest..."
+echo "Resetting local changes and pulling latest..."
+git checkout .
 git pull
 
 echo "Building with CUDA..."

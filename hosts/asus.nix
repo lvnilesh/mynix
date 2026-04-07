@@ -1,4 +1,5 @@
 {
+  lib,
   pkgs,
   modulesPath,
   inputs,
@@ -54,6 +55,10 @@
   services.udev.extraRules = ''
     ACTION=="add", SUBSYSTEM=="pci", ATTR{vendor}=="0x8086", KERNEL=="0000:3d:00.0", ATTR{power/control}="on"
   '';
+
+  # RTX 4090 (Ada) only — use NVIDIA open kernel modules.
+  # Shared nvidia.nix defaults to open=false for nuc's 1080 Ti (Pascal).
+  hardware.nvidia.open = lib.mkForce true;
 
   programs.nano.enable = false;
   environment.variables.EDITOR = "vim";

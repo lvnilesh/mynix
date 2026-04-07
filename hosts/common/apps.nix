@@ -314,6 +314,7 @@ in {
 
     # Misc
     cowsay
+    foot
 
     # Kitty terminal terminfo — allows correct cursor/line handling when
     # SSHing from a Kitty terminal (TERM=xterm-kitty) into this host.

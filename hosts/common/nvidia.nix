@@ -29,26 +29,14 @@
 
   hardware.nvidia = {
     modesetting.enable = true;
-    powerManagement.enable = true;
+    # Desktop workstation — no suspend/hibernate needed.
+    # Disabling removes NVreg_PreserveVideoMemoryAllocations which caused
+    # reboot hangs (GPU stuck in suspend state, requiring hard power-off).
+    powerManagement.enable = false;
     powerManagement.finegrained = false;
     open = false;
     nvidiaSettings = true;
     package = config.boot.kernelPackages.nvidiaPackages.production;
-  };
-
-  # Clean GPU teardown on shutdown/reboot — the NixOS nvidia module already
-  # creates suspend/resume/hibernate services via powerManagement.enable, but
-  # does NOT create one for shutdown/reboot. Without this, nvidia-drm.fbdev=1
-  # combined with NVreg_PreserveVideoMemoryAllocations holds the displays and
-  # the system hangs until monitors are physically unplugged.
-  systemd.services.nvidia-power = {
-    description = "NVIDIA GPU power-off on shutdown/reboot";
-    before = ["shutdown.target" "reboot.target" "halt.target"];
-    wantedBy = ["shutdown.target" "reboot.target" "halt.target"];
-    serviceConfig = {
-      Type = "oneshot";
-      ExecStart = "${config.hardware.nvidia.package.bin}/bin/nvidia-sleep.sh suspend";
-    };
   };
 
   # NVIDIA persistence daemon — keeps GPU initialized between CUDA jobs.

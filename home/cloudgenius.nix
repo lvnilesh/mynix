@@ -155,7 +155,7 @@
     papirus-icon-theme
     resilio-sync
     yt-dlp
-    claude-code
+    # claude-code # — managed via npm; nixpkgs 2.1.88 was yanked from registry
     prismlauncher
     nerd-fonts.jetbrains-mono
     (pkgs.writeShellScriptBin "nettools-help" ''
@@ -393,12 +393,11 @@
       # Up/Down arrow: search history by prefix already typed
       bind '"\e[A": history-search-backward'
       bind '"\e[B": history-search-forward'
+
+      # Kitty SSH kitten only inside Kitty; plain ssh elsewhere (Foot etc.)
+      [[ "$TERM" == "xterm-kitty" ]] && alias ssh='kitten ssh'
     '';
     shellAliases = {
-      # Kitty SSH kitten: transparently wraps ssh to auto-deploy xterm-kitty
-      # terminfo on first connection — fixes garbled display on macOS and any
-      # remote host that lacks the terminfo entry.
-      ssh = "kitten ssh";
       g = "git"; # enables `g st` etc. using defined git aliases
       open = "xdg-open"; # quick opener alias
       whatsapp = "google-chrome-stable --ozone-platform-hint=wayland --enable-features=UseOzonePlatform --app=https://web.whatsapp.com/";
