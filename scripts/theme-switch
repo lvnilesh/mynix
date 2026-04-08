@@ -66,9 +66,9 @@ width=420
 outer-margin=10
 padding=10,15
 border-size=2
-border-radius=0
+border-radius=14
 max-icon-size=32
-font=JetBrainsMono Nerd Font 12
+font=SF Pro Display 12
 text-color=${FG}
 border-color=${ACCENT}
 background-color=${BG}
@@ -77,17 +77,17 @@ EOF
 # ── Generate SwayOSD theme ──
 cat > "$HOME/.config/swayosd/style.css" << EOF
 window {
-  border-radius: 0;
+  border-radius: 14px;
   opacity: 0.97;
   border: 2px solid ${FG};
   background-color: ${BG};
   color: ${FG};
 }
-label { font-family: 'JetBrainsMono Nerd Font'; font-size: 11pt; }
-progressbar { border-radius: 0; }
+label { font-family: 'SF Pro Display'; font-size: 11pt; }
+progressbar { border-radius: 14px; }
 progressbar:disabled trough { min-height: 6px; }
 progressbar trough { min-height: 6px; background-color: alpha(${FG}, 0.2); }
-progressbar trough highlight { background-color: ${ACCENT}; border-radius: 0; }
+progressbar trough highlight { background-color: ${ACCENT}; border-radius: 14px; }
 image { padding: 6px; -gtk-icon-style: symbolic; color: ${FG}; }
 EOF
 
@@ -207,7 +207,7 @@ EOF
 
 # ── Generate Walker theme ──
 cat > "$HOME/.config/walker/theme.css" << EOF
-* { font-family: 'JetBrainsMono Nerd Font'; font-size: 16px; color: ${FG}; }
+* { font-family: 'SF Pro Display'; font-size: 16px; color: ${FG}; }
 .activation-label { font-size: 0px; }
 #box { background: alpha(${BG}, 0.95); padding: 20px; border: 2px solid ${ACCENT}; }
 #search { background: ${BG}; padding: 10px; border-bottom: 1px solid ${COLOR8}; }

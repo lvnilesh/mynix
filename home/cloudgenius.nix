@@ -427,7 +427,7 @@
       # Use a patched Nerd Font so starship/Powerline glyphs render correctly
       # NOTE: fontconfig reports the NL (no ligatures) mono family as present: "JetBrainsMonoNL Nerd Font Mono"
       # We standardize on that to avoid fallback mismatches and boxes for Nerd glyphs.
-      font_family = "JetBrainsMonoNL Nerd Font Mono";
+      font_family = "SF Mono";
       font_size = 14.0;
     };
   };
@@ -492,6 +492,8 @@
     "org/gnome/desktop/interface" = {
       color-scheme = "prefer-dark";
       gtk-theme = "Nordic-darker";
+      text-scaling-factor = 1.5;
+      font-name = "SF Pro Display 12";
     };
   };
 
@@ -508,14 +510,14 @@
           "workbench.colorTheme" = "Nord";
           "workbench.preferredDarkColorTheme" = "Nord";
           "workbench.startupEditor" = "none";
-          "editor.fontFamily" = "JetBrainsMono Nerd Font, monospace";
+          "editor.fontFamily" = "SF Mono, monospace";
           "editor.fontSize" = 14;
           "editor.fontLigatures" = true;
           "editor.bracketPairColorization.enabled" = true;
           "editor.semanticHighlighting.enabled" = true;
           "window.titleBarStyle" = "custom";
           # Prefer the mono patched variant for terminals so glyphs render correctly
-          "terminal.integrated.fontFamily" = "JetBrainsMono Nerd Font Mono, monospace";
+          "terminal.integrated.fontFamily" = "SF Mono, monospace";
           "terminal.integrated.fontSize" = 14;
           "terminal.integrated.minimumContrastRatio" = 4.2;
           "workbench.iconTheme" = "material-icon-theme";

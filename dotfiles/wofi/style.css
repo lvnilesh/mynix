@@ -3,13 +3,15 @@
 @import url("/home/cloudgenius/mynix/dotfiles/wofi/theme.css");
 
 * {
-  font-family: "JetBrainsMono Nerd Font", monospace;
+  font-family: "SF Pro Display", sans-serif;
   font-size: 16px;
   border: none;
   box-shadow: none;
 }
 
+#window,
 #input {
+  border-radius: 12px;
   margin: 0 0 12px 0;
   padding: 10px 14px;
 }

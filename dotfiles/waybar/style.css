@@ -7,12 +7,12 @@
 @import url("/home/cloudgenius/.config/waybar/theme.css");
 
 * {
-  font-family: "JetBrainsMono Nerd Font", sans-serif;
+  font-family: "SF Pro Display", sans-serif;
   font-size: 24px;
   font-weight: 500;
   min-height: 0;
   border: none;
-  border-radius: 0;
+  border-radius: 12px;
 }
 
 /* ── Left ── */
@@ -26,7 +26,7 @@
   padding: 0 12px;
   margin: 0 3px;
   min-width: 16px;
-  font-family: "JetBrainsMono Nerd Font", sans-serif;
+  font-family: "SF Pro Display", sans-serif;
   font-size: 24px;
   font-weight: 600;
   transition: all 0.15s ease;
@@ -112,7 +112,7 @@
 /* Tooltip */
 
 tooltip {
-  border-radius: 0;
+  border-radius: 12px;
   padding: 6px 10px;
 }
 

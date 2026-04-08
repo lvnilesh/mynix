@@ -1,4 +1,14 @@
 {pkgs, ...}: let
+  # Apple SF Pro & SF Mono fonts (local, from ~/mynix/fonts/)
+  apple-fonts = pkgs.stdenvNoCC.mkDerivation {
+    pname = "apple-fonts";
+    version = "1.0";
+    src = ../../fonts;
+    installPhase = ''
+      mkdir -p $out/share/fonts/opentype
+      cp *.otf *.ttf $out/share/fonts/opentype/
+    '';
+  };
   # Zoom wrapper launching with Wayland-friendly environment for Hyprland.
   # Provides a distinct desktop entry "Zoom (Wayland)".
   zoomWayland = pkgs.symlinkJoin {
@@ -115,6 +125,8 @@
 in {
   # List packages installed in system profile. To search, run:
   # $ nix search wget
+  fonts.packages = [apple-fonts];
+
   environment.systemPackages = with pkgs; [
     # Core CLI
     rbw
