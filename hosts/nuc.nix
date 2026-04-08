@@ -31,6 +31,9 @@
     ACTION=="add", SUBSYSTEM=="thunderbolt", ATTR{authorized}=="0", ATTR{authorized}="1"
   '';
 
+  # GTX 1080 Ti requires legacy_580 drivers (production 595.x dropped Pascal support)
+  hardware.nvidia.package = config.boot.kernelPackages.nvidiaPackages.legacy_580;
+
   # eGPU kernel params
   boot.kernelParams = [
     "nvidia.NVreg_RegistryDwords=EnableBrightnessControl=0"

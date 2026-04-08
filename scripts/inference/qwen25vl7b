@@ -22,7 +22,7 @@ fi
     --port 8001 \
     --n-gpu-layers 99 \
     --flash-attn on \
-    --ctx-size 8192 \
-    --parallel 2 \
+    --ctx-size 16384 \
+    --parallel 1 \
     --batch-size 2048 \
     --ubatch-size 512
