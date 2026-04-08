@@ -245,6 +245,33 @@ fi
 echo "0" > "$HOME/.config/current-wallpaper-index"
 
 # ── Reload components ──
+
+# ── Chrome theme (BrowserThemeColor managed policy) ──
+CHROME_POLICY_DIR="/etc/opt/chrome/policies/managed"
+if [ -d "$CHROME_POLICY_DIR" ]; then
+    echo "{\"BrowserThemeColor\":\"${ACCENT}\"}" | sudo tee "$CHROME_POLICY_DIR/theme.json" > /dev/null
+    # Trigger policy reload on running Chrome (Chrome 142+)
+    google-chrome-stable --refresh-platform-policy --no-startup-window 2>/dev/null &disown || true
+fi
+
+# ── VSCode theme ──
+VSCODE_SETTINGS="$HOME/.config/Code/User/settings.json"
+if [ -f "$VSCODE_SETTINGS" ] && command -v jq &>/dev/null; then
+    case "$THEME" in
+        catppuccin)  VSCODE_THEME="Catppuccin Mocha" ;;
+        dracula)     VSCODE_THEME="Dracula" ;;
+        everforest)  VSCODE_THEME="Default Dark Modern" ;;
+        gruvbox)     VSCODE_THEME="Gruvbox Dark Medium" ;;
+        kanagawa)    VSCODE_THEME="Default Dark Modern" ;;
+        matte-black) VSCODE_THEME="Default Dark Modern" ;;
+        nord)        VSCODE_THEME="Nord" ;;
+        rose-pine)   VSCODE_THEME="Rosé Pine" ;;
+        tokyo-night) VSCODE_THEME="Tokyo Night" ;;
+        *)           VSCODE_THEME="Default Dark Modern" ;;
+    esac
+    jq --arg t "$VSCODE_THEME" '."workbench.colorTheme" = $t | ."workbench.preferredDarkColorTheme" = $t' \
+        "$VSCODE_SETTINGS" > "${VSCODE_SETTINGS}.tmp" && mv "${VSCODE_SETTINGS}.tmp" "$VSCODE_SETTINGS"
+fi
 hyprctl reload 2>/dev/null || true
 kitty @ --to unix:@kitty set-colors --all "$HOME/.config/kitty/theme.conf" 2>/dev/null || true
 systemctl --user restart waybar.service 2>/dev/null || true

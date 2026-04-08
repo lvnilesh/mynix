@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Toggle window gaps between normal (10/5/2) and zero (0/0/0)
+# Toggle window gaps between normal (12/6/0) and zero (0/0/0)
 # Uses state file instead of hyprctl getoption to avoid Hyprland segfault
 STATE_FILE="/tmp/hypr-gaps-zero"
 if [ -f "$STATE_FILE" ]; then

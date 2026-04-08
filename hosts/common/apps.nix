@@ -340,4 +340,7 @@ in {
   # LocalSend discovery (UDP) and file transfer (TCP)
   networking.firewall.allowedTCPPorts = [53317];
   networking.firewall.allowedUDPPorts = [53317];
+
+  # Chrome managed policy directory for dynamic theme switching via BrowserThemeColor
+  systemd.tmpfiles.rules = ["d /etc/opt/chrome/policies/managed 0755 root root -"];
 }

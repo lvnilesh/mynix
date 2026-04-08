@@ -494,18 +494,23 @@
     };
   };
 
-  # VSCode Nord Dark theme configuration
+  # VSCode theme configuration
   programs.vscode = {
     enable = true;
     profiles = {
       default = {
         extensions = with pkgs.vscode-extensions; [
           arcticicestudio.nord-visual-studio-code
+          catppuccin.catppuccin-vsc
+          dracula-theme.theme-dracula
+          jdinhlife.gruvbox
+          enkia.tokyo-night
+          mvllow.rose-pine
           pkief.material-icon-theme
         ];
         userSettings = {
-          "workbench.colorTheme" = "Nord";
-          "workbench.preferredDarkColorTheme" = "Nord";
+          # colorTheme managed by theme-switch script
+          # preferredDarkColorTheme managed by theme-switch script
           "workbench.startupEditor" = "none";
           "editor.fontFamily" = "SF Mono, monospace";
           "editor.fontSize" = 14;

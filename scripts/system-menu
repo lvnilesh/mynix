@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Comprehensive system menu (omarchy-inspired) — nested wofi menus
+# Comprehensive system menu (macOS-inspired) — nested wofi menus
 set -euo pipefail
 
 WOFI_OPTS="--dmenu --prompt Menu --config $HOME/mynix/dotfiles/wofi/config --style $HOME/mynix/dotfiles/wofi/style.css"
