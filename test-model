@@ -1,0 +1,30 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# Quick test: verify the current model responds on both hermes (asus) and openclaw (m1)
+# Usage:
+#   ./test-model                              # test current model
+#   ./switch-model qwen27 && ./test-model     # switch and test
+
+OPENCLAW_HOST="stacey@m1"
+OPENCLAW_BIN="\$HOME/.local/share/mise/installs/node/24.14.0/bin"
+
+# Ground truth from the server
+echo "=== Server ==="
+curl -s http://localhost:8001/v1/models | python3 -c "
+import sys,json
+d=json.load(sys.stdin)['data'][0]
+print(f\"  Model: {d['id']}\")
+print(f\"  Context: {d['meta'].get('n_ctx_train','?')} (train), actual set via --ctx-size\")
+"
+echo ""
+curl -s http://localhost:8001/v1/models | jq
+
+echo ""
+echo "=== Hermes (asus) ==="
+hermes chat -q "hello"
+
+echo ""
+echo "=== Openclaw (m1) ==="
+ssh "$OPENCLAW_HOST" "export PATH=$OPENCLAW_BIN:\$PATH && openclaw agent --agent main --message 'What is 2+2? One word answer.'" 2>&1 \
+    | grep -viE "config|warn|debug|info|trace|falling back|gateway agent" | tail -3

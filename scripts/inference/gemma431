@@ -2,8 +2,8 @@
 set -euo pipefail
 export CUDA_VISIBLE_DEVICES=0
 
-MODEL_PATH="${MODEL_PATH:-/home/cloudgenius/inference/models/qwen27/Qwen3.5-27B-UD-Q4_K_XL.gguf}"
-MODEL_ALIAS="${MODEL_ALIAS:-unsloth/Qwen3.5-27B}"
+MODEL_PATH="${MODEL_PATH:-/home/cloudgenius/inference/models/gemma431/gemma-4-31B-it-UD-Q4_K_XL.gguf}"
+MODEL_ALIAS="${MODEL_ALIAS:-unsloth/gemma-4-31B}"
 
 if [[ ! -f "$MODEL_PATH" ]]; then
     echo "Error: GGUF model file not found: $MODEL_PATH" >&2
@@ -13,18 +13,19 @@ fi
 /home/cloudgenius/inference/llama.cpp/build/bin/llama-server \
     --model "$MODEL_PATH" \
     --alias "$MODEL_ALIAS" \
+    --mmproj /home/cloudgenius/inference/models/gemma431/mmproj-F16.gguf \
+    --no-mmproj-offload \
     --temp 1.0 \
     --top-p 0.95 \
-    --min-p 0.01 \
+    --top-k 64 \
     --host 0.0.0.0 \
     --port 8001 \
-    --kv-unified \
-    --cache-type-k q8_0 --cache-type-v q8_0 \
+    --fit off \
+    --cache-type-k q4_0 --cache-type-v q4_0 \
     --flash-attn on \
-    --n-gpu-layers 99 \
+    --n-gpu-layers 60 \
     --parallel 1 \
     --batch-size 2048 --ubatch-size 512 \
     --jinja \
-    --swa-full \
     --reasoning off \
-    --ctx-size 131072
+    --ctx-size 122880

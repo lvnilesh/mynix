@@ -117,6 +117,10 @@ in {
   # $ nix search wget
   environment.systemPackages = with pkgs; [
     # Core CLI
+    rbw
+    libopus
+    age
+    pinentry-curses
     vim
     wget
     git

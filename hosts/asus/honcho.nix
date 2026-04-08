@@ -84,6 +84,19 @@
       honcho-db:
       honcho-redis:
   '';
+
+  # Wait for Honcho API to be healthy before declaring service started
+  healthCheck = pkgs.writeShellScript "honcho-health-check" ''
+    for i in $(seq 1 60); do
+      if ${pkgs.curl}/bin/curl -sf http://localhost:8200/docs > /dev/null 2>&1; then
+        echo "Honcho API healthy after ''${i}s"
+        exit 0
+      fi
+      sleep 1
+    done
+    echo "Honcho API not ready after 60s" >&2
+    exit 1
+  '';
 in {
   # Redis requires memory overcommit for background saves
   boot.kernel.sysctl."vm.overcommit_memory" = 1;
@@ -102,6 +115,7 @@ in {
       Type = "oneshot";
       RemainAfterExit = true;
       ExecStart = "${pkgs.docker}/bin/docker compose -f /etc/honcho/docker-compose.yml up -d --remove-orphans";
+      ExecStartPost = healthCheck;
       ExecStop = "${pkgs.docker}/bin/docker compose -f /etc/honcho/docker-compose.yml down";
     };
   };

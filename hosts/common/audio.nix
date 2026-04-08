@@ -55,6 +55,22 @@
           }
         ]
       '')
+      (pkgs.writeTextDir "share/wireplumber/wireplumber.conf.d/53-kef-lsx-softmixer.conf" ''
+        monitor.alsa.rules = [
+          {
+            matches = [
+              {
+                node.name = "alsa_output.usb-KEF_LSX_II_LT-01.analog-stereo"
+              }
+            ]
+            actions = {
+              update-props = {
+                api.alsa.softmixer = true
+              }
+            }
+          }
+        ]
+      '')
     ];
   };
 }

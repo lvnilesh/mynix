@@ -1,0 +1,243 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+NIXDIR="$HOME/mynix"
+LLAMACPP="$NIXDIR/hosts/asus/llamacpp.nix"
+HERMES="$NIXDIR/hosts/asus/hermes-agent.nix"
+
+OPENCLAW_HOST="stacey@m1"
+OPENCLAW_JSON="/Users/stacey/.openclaw/openclaw.json"
+
+MODELS=(qwen27 qwen35 gemma431)
+
+# ── Model metadata ────────────────────────────────────────────────────────────
+# Format: MODEL_ID (as reported by llama-server --alias)
+#         MODEL_NAME (human-readable for openclaw)
+#         MODEL_CTX (context window size)
+#         MODEL_INPUT (comma-separated: text or text,image)
+
+declare -A MODEL_ID MODEL_NAME MODEL_CTX MODEL_INPUT
+
+MODEL_ID[qwen27]="unsloth/Qwen3.5-27B"
+MODEL_NAME[qwen27]="Qwen 3.5 27B (ASUS)"
+MODEL_CTX[qwen27]=131072
+MODEL_INPUT[qwen27]="text"
+
+MODEL_ID[qwen35]="unsloth/Qwen3.5-35B-A3B"
+MODEL_NAME[qwen35]="Qwen 3.5 35B (ASUS)"
+MODEL_CTX[qwen35]=131072
+MODEL_INPUT[qwen35]="text"
+
+MODEL_ID[gemma431]="unsloth/gemma-4-31B"
+MODEL_NAME[gemma431]="Gemma 4 31B (ASUS)"
+MODEL_CTX[gemma431]=122880
+MODEL_INPUT[gemma431]="text,image"
+
+# ── Helpers ───────────────────────────────────────────────────────────────────
+
+current() {
+    grep -B1 'wantedBy = \["multi-user.target"\]' "$LLAMACPP" \
+        | grep 'systemd.services' \
+        | sed 's/.*services\.\(.*\) = {/\1/' || echo "unknown"
+}
+
+get_status() {
+    systemctl is-active "$1" 2>/dev/null || true
+}
+
+# ── Commands ──────────────────────────────────────────────────────────────────
+
+usage() {
+    local cur
+    cur=$(current)
+    echo "Switch the boot-default LLM model, rebuild NixOS, and update openclaw on m1."
+    echo ""
+    echo "Usage: ./switch-model <model>    Switch and rebuild"
+    echo "       ./switch-model status     Show current default"
+    echo "       ./switch-model list       List available models"
+    echo ""
+    echo "Models:"
+    for m in "${MODELS[@]}"; do
+        local label="${MODEL_NAME[$m]} — ctx ${MODEL_CTX[$m]}"
+        if [[ "$m" == "$cur" ]]; then
+            printf "  %-12s  %s  ← default\n" "$m" "$label"
+        else
+            printf "  %-12s  %s\n" "$m" "$label"
+        fi
+    done
+    echo ""
+    echo "To temporarily switch without rebuilding:"
+    echo "  sudo systemctl start <model>"
+}
+
+list_models() {
+    local cur
+    cur=$(current)
+    echo "Available models:"
+    for m in "${MODELS[@]}"; do
+        local st
+        st=$(get_status "$m")
+        local tags=""
+        [[ "$m" == "$cur" ]] && tags="boot-default"
+        [[ "$st" == "active" ]] && tags="${tags:+$tags, }running"
+        [[ -z "$tags" ]] && tags="$st"
+        printf "  %-12s  %-30s  [%s]\n" "$m" "${MODEL_ID[$m]}" "$tags"
+    done
+}
+
+update_openclaw() {
+    local target="$1"
+    local model_id="${MODEL_ID[$target]}"
+    local model_name="${MODEL_NAME[$target]}"
+    local ctx="${MODEL_CTX[$target]}"
+    local input_raw="${MODEL_INPUT[$target]}"
+
+    echo "Updating openclaw on m1..."
+
+    # Pass raw comma-separated string, split in python
+
+    ssh "$OPENCLAW_HOST" "python3 -c \"
+import json, sys
+
+with open('$OPENCLAW_JSON') as f:
+    cfg = json.load(f)
+
+provider = cfg['models']['providers']['custom-asus-8001']
+model = provider['models'][0]
+old_id = model['id']
+
+# Update model definition
+model['id'] = '$model_id'
+model['name'] = '$model_name'
+model['reasoning'] = False
+model['input'] = '$input_raw'.split(',')
+model['contextWindow'] = $ctx
+
+# Update agent references
+old_ref = 'custom-asus-8001/' + old_id
+new_ref = 'custom-asus-8001/$model_id'
+
+cfg['agents']['defaults']['model']['primary'] = new_ref
+cfg['agents']['defaults']['model']['fallbacks'] = [new_ref]
+
+if 'compaction' in cfg['agents']['defaults']:
+    cfg['agents']['defaults']['compaction']['model'] = new_ref
+
+# Update model-specific settings key
+models_cfg = cfg['agents']['defaults'].get('models', {})
+if old_ref in models_cfg:
+    models_cfg[new_ref] = models_cfg.pop(old_ref)
+elif new_ref not in models_cfg:
+    models_cfg[new_ref] = {}
+cfg['agents']['defaults']['models'] = models_cfg
+
+with open('$OPENCLAW_JSON', 'w') as f:
+    json.dump(cfg, f, indent=2)
+
+print(f'  openclaw: {old_id} → $model_id (ctx={$ctx})')
+\"" || {
+        echo "  Warning: failed to update openclaw on m1 (ssh unreachable?)"
+        return 0
+    }
+
+    # Restart openclaw gateway
+    echo "  Restarting openclaw gateway..."
+    ssh "$OPENCLAW_HOST" "launchctl kickstart -k gui/\$(id -u)/ai.openclaw.gateway 2>/dev/null" || {
+        echo "  Warning: failed to restart openclaw gateway"
+        return 0
+    }
+    echo "  openclaw updated."
+}
+
+switch_model() {
+    local target="$1"
+    local cur
+    cur=$(current)
+
+    # Validate
+    local valid=false
+    for m in "${MODELS[@]}"; do
+        [[ "$m" == "$target" ]] && valid=true
+    done
+    if ! $valid; then
+        echo "Error: unknown model '$target'"
+        echo "Available: ${MODELS[*]}"
+        exit 1
+    fi
+
+    if [[ "$target" == "$cur" ]]; then
+        echo "$target is already the boot default."
+        # Ensure model is actually running and ready        local st        st=$(get_status "$target")        if [[ "$st" != "active" ]]; then            echo "Service not running. Starting..."            sudo systemctl start "$target"        fi        echo "Waiting for model to be ready..."        for i in $(seq 1 60); do            if curl -sf http://localhost:8001/v1/models > /dev/null 2>&1; then                echo "Model ready after ${i}s."                break            fi            sleep 1        done        exit 0
+    fi
+
+    echo "Switching: $cur → $target"
+    echo "  Model: ${MODEL_ID[$target]} (${MODEL_NAME[$target]})"
+    echo "  Context: ${MODEL_CTX[$target]}, Input: ${MODEL_INPUT[$target]}"
+    echo ""
+
+    # 1. Update llamacpp.nix — move wantedBy
+    sed -i "/systemd.services.${cur}/,/^  systemd\.\|^  #\|^  networking\|^}$/{/wantedBy/d}" "$LLAMACPP"
+    sed -i "/systemd.services.${target} = {/a\\
+    wantedBy = [\"multi-user.target\"];" "$LLAMACPP"
+
+    # 2. Update hermes-agent dependency
+    sed -i "s|context_length = .*|context_length = ${MODEL_CTX[$target]};|" "$HERMES"
+    sed -i 's|default = ".*";|default = "'"${MODEL_ID[$target]}"'";|' "$HERMES"
+    sed -i "s/after = \\[\"${cur}.service\"/after = [\"${target}.service\"/" "$HERMES"
+    sed -i "s/wants = \\[\"${cur}.service\"/wants = [\"${target}.service\"/" "$HERMES"
+
+    # 3. Update comments
+    sed -i "s/Boot default: ${cur} has/Boot default: ${target} has/" "$LLAMACPP"
+    sed -i "s/the wantedBy line from ${cur}/the wantedBy line from ${target}/" "$LLAMACPP"
+
+    # Verify nix config
+    local new_cur
+    new_cur=$(current)
+    if [[ "$new_cur" != "$target" ]]; then
+        echo "Error: nix config update failed. Check $LLAMACPP manually."
+        exit 1
+    fi
+
+
+    # 4. Update openclaw on m1
+    update_openclaw "$target"
+    echo ""
+
+    # 5. Rebuild NixOS
+    echo "Rebuilding NixOS..."
+    cd "$NIXDIR"
+    ./redo asus
+    echo ""
+
+    # Wait for model to be ready on port 8001
+    echo "Waiting for model to be ready..."
+    for i in $(seq 1 60); do
+        if curl -sf http://localhost:8001/v1/models > /dev/null 2>&1; then
+            echo "Model ready after ${i}s."
+            break
+        fi
+        sleep 1
+    done
+    if ! curl -sf http://localhost:8001/v1/models > /dev/null 2>&1; then
+        echo "Warning: model not ready after 60s — check: journalctl -u $target -f"
+    fi
+    echo "Done."
+    list_models
+
+}
+
+# ── Main ──────────────────────────────────────────────────────────────────────
+
+case "${1:-help}" in
+    status)
+        echo "Boot default: $(current)"
+        local_running=""
+        for m in "${MODELS[@]}"; do
+            [[ "$(get_status "$m")" == "active" ]] && local_running="$m"
+        done
+        echo "Running:      ${local_running:-none}"
+        ;;
+    list)   list_models ;;
+    -h|--help|help) usage ;;
+    *)      switch_model "$1" ;;
+esac

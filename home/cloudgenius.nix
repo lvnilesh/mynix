@@ -47,14 +47,6 @@
   };
 
   # Kvantum config: use the Nordic-Darker Kvantum theme
-  xdg.configFile."chrome-flags.conf".text = ''
-    --ozone-platform=wayland
-    --enable-features=WaylandWindowDecorations,VaapiVideoDecodeLinuxGL,VaapiVideoEncoder
-    --ignore-gpu-blocklist
-    --enable-gpu-rasterization
-    --use-gl=egl
-    --force-dark-mode
-  '';
 
   xdg.configFile."Kvantum/kvantum.kvconfig".text = ''
     [General]
@@ -149,7 +141,12 @@
       buildInputs = [pkgs.makeWrapper];
       postBuild = ''
         wrapProgram $out/bin/google-chrome-stable \
-          --set LIBVA_DRIVER_NAME iHD
+          --set LIBVA_DRIVER_NAME iHD \
+          --add-flags "--ozone-platform=wayland" \
+          --add-flags "--enable-features=WaylandWindowDecorations,VaapiVideoDecodeLinuxGL,VaapiVideoEncoder,AcceleratedVideoEncoder" \
+          --add-flags "--ignore-gpu-blocklist" \
+          --add-flags "--enable-gpu-rasterization" \
+          --add-flags "--force-dark-mode"
       '';
     })
     papirus-icon-theme
@@ -398,6 +395,7 @@
       [[ "$TERM" == "xterm-kitty" ]] && alias ssh='kitten ssh'
     '';
     shellAliases = {
+      agenix = "agenix -i <(rbw get age-priv-key)";
       g = "git"; # enables `g st` etc. using defined git aliases
       open = "xdg-open"; # quick opener alias
       whatsapp = "google-chrome-stable --ozone-platform-hint=wayland --enable-features=UseOzonePlatform --app=https://web.whatsapp.com/";

@@ -39,8 +39,8 @@
     ./asus/llamacpp.nix
     ./common/ollama.nix
     ./asus/hermes-agent.nix
+    ./asus/hermes-secrets-agenix.nix
     ./asus/hermes-backup.nix
-    ./asus/hermes-secrets.nix
     ./common/chatbot.nix
     ./common/document-tools.nix
     ./common/home-assistant.nix
@@ -76,19 +76,21 @@
     if [ -z "$HERMES_MOTD_SHOWN" ] && [ -n "$SSH_TTY" -o -n "$DISPLAY" -a -t 0 ]; then
       cat <<'MOTD'
     ┌──────────────────────────────────────────────────────────────────┐
-    │  Hermes Agent secrets — Vaultwarden single source of truth       │
+    │  Secrets: agenix — auto-decrypted at boot (SSH host key)         │
+    │  No manual unlock needed. Hermes starts automatically.           │
     │                                                                  │
-    │  AFTER REBOOT run as cloudgenius:                                │
-    │    rbw unlock                                                    │
-    │    sudo systemctl restart hermes-secrets hermes-agent            │
+    │  EDIT SECRETS:                                                   │
+    │    cd ~/mynix && agenix -e secrets/hermes.env.age                │
+    │    ./redo asus                                                   │
+    │    (age key loaded from Vaultwarden "age-priv-key" via rbw)      │
     │                                                                  │
-    │  AFTER EDITING SECRETS in Vaultwarden:                           │
-    │    rbw sync                                                      │
-    │    sudo systemctl restart hermes-secrets hermes-agent            │
+    │  SWITCH MODELS:                                                  │
+    │    cd ~/mynix && ./switch-model gemma431   (or qwen27, qwen35)   │
     │                                                                  │
     │  Vault: vault.i.cloudgenius.app  (nilesh@cloudgeni.us)           │
-    │  Note:  "hermes-agent-env"                                       │
-    │  Details: ~/mynix/hosts/asus/hermes-secrets.nix                  │
+    │                                                                  │
+    │  AFTER OS REINSTALL (host key changes):                          │
+    │    Update SSH key in secrets.nix, then: agenix -r && ./redo asus │
     └──────────────────────────────────────────────────────────────────┘
     MOTD
       export HERMES_MOTD_SHOWN=1

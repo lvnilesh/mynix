@@ -4,104 +4,157 @@
 #
 # Usage:
 #   hermes                    # interactive CLI
-#   hermes setup              # re-run setup wizard
-#   hermes model              # switch model/provider
-#   hermes gateway            # start messaging gateway
+#   hermes setup              # re-run setup wizard (BLOCKED in managed mode)
+#   hermes model              # switch model/provider (BLOCKED in managed mode)
 #   systemctl status hermes-agent  # check gateway service
 #
-# Config: /var/lib/hermes/.hermes/config.yaml (managed by NixOS)
-# Secrets: /etc/hermes-agent/secrets.env
+# Config: gateway at /var/lib/hermes/.hermes/config.yaml (managed by NixOS)
+#         CLI at /home/cloudgenius/.hermes/config.yaml (separate copy)
+# Secrets: config.age.secrets."hermes-env".path (via agenix)
 #
 # exa-py fix: using fork until upstream merges PR #4649
 # Revert flake.nix to github:NousResearch/hermes-agent when merged.
 # Tracked: https://github.com/NousResearch/hermes-agent/issues/4648
 {
+  config,
   inputs,
   pkgs,
   ...
-}: {
+}: let
+  # Shared env block for MCP servers that need secrets from .env.
+  # Hermes filters subprocess environments to a safe allowlist;
+  # HERMES_HOME must be passed explicitly via the "env" key.
+  mcpEnv = {HERMES_HOME = "/home/cloudgenius/.hermes";};
+
+  # QMD — semantic markdown search for Brain vault
+  qmd-wrapper = pkgs.writeShellScriptBin "qmd" ''
+    export PATH="${pkgs.nodejs_22}/bin:$PATH"
+    QMD_DIR="$HOME/.local/share/qmd"
+    if [ ! -f "$QMD_DIR/node_modules/.bin/qmd" ]; then
+      mkdir -p "$QMD_DIR"
+      cd "$QMD_DIR"
+      ${pkgs.nodejs_22}/bin/npm install @tobilu/qmd@2.1.0 --prefix "$QMD_DIR" 2>/dev/null
+    fi
+    exec "$QMD_DIR/node_modules/.bin/qmd" "$@"
+  '';
+
+  # Settings shared by both the gateway service and the interactive CLI.
+  sharedSettings = {
+    model = {
+      default = "unsloth/gemma-4-31B";
+      provider = "custom";
+      base_url = "http://localhost:8001/v1";
+      context_length = 122880;
+    };
+    terminal.backend = "local";
+    memory = {
+      memory_enabled = true;
+      user_profile_enabled = true;
+      provider = "honcho";
+    };
+    honcho = {
+      base_url = "http://localhost:8200";
+      memory_mode = "hybrid";
+      recall_mode = "hybrid";
+    };
+    display = {
+      streaming = true;
+      show_reasoning = true;
+      personality = "kawaii";
+    };
+    mcp_servers = {
+      brain = {
+        command = "qmd";
+        args = ["mcp"];
+      };
+      paperless = {
+        command = "bash";
+        args = [
+          "-c"
+          "source \$HERMES_HOME/.env && npx -y @nloui/paperless-mcp \$PAPERLESS_NGX_API_ENDPOINT \$PAPERLESS_NGX_TOKEN"
+        ];
+        env = mcpEnv;
+      };
+      md = {
+        command = "bash";
+        args = [
+          "-c"
+          "cd /home/cloudgenius/src/md && uv run md-mcp"
+        ];
+      };
+      flux2-pro = {
+        command = "bash";
+        args = [
+          "-c"
+          "set -a && source \$HERMES_HOME/.env && set +a && uv run --with httpx --with mcp /home/cloudgenius/.hermes/mcp-servers/flux2-pro/server.py"
+        ];
+        env = mcpEnv;
+      };
+      # Disabled: HA lacks native MCP support (mcp/tools/list unknown command).
+      # Re-enable when Home Assistant adds MCP integration.
+      # homeassistant = {
+      #   command = "bash";
+      #   args = [
+      #     "-c"
+      #     "source \$HERMES_HOME/.env && HASS_WS=\$(echo \$HASS_URL | sed s/^http/ws/)/api/websocket && uvx mcp-server-home-assistant --url \$HASS_WS --token \$HASS_TOKEN"
+      #   ];
+      #   env = mcpEnv;
+      # };
+    };
+  };
+
+  # Generate a YAML config for the CLI user (separate from the gateway's copy).
+  yamlFormat = pkgs.formats.yaml {};
+  cliConfigFile = yamlFormat.generate "hermes-cli-config.yaml" sharedSettings;
+in {
   imports = [inputs.hermes-agent.nixosModules.default];
 
   services.hermes-agent = {
     enable = true;
     addToSystemPackages = true;
+    settings = sharedSettings;
+    environmentFiles = [config.age.secrets."hermes-env".path];
+  };
 
-    settings = {
-      model = {
-        default = "unsloth/Qwen3.5-27B";
-        provider = "custom";
-        base_url = "http://localhost:8001/v1";
-        context_length = 131072;
-      };
-      terminal.backend = "local";
-      memory = {
-        memory_enabled = true;
-        user_profile_enabled = true;
-      };
+  # Ensure gateway starts after model backend and memory layer are ready
+  systemd.services.hermes-agent = {
+    after = ["gemma431.service" "honcho.service"];
+    wants = ["gemma431.service" "honcho.service"];
+    environment = {
+      TELEGRAM_ALLOWED_USERS = "6366923819";
     };
-
-    environmentFiles = ["/etc/hermes-agent/secrets.env"];
   };
 
-  # Symlink cloudgenius CLI .env to the vault-sourced secrets file.
-  # cloudgenius is in the hermes group so can read the 640 root:hermes file.
-  system.activationScripts.hermes-cli-env = ''
-    rm -f /home/cloudgenius/.hermes/.env
-    ln -sf /etc/hermes-agent/secrets.env /home/cloudgenius/.hermes/.env
-  '';
-
-  # Fix permissions so hermes (in users group) can traverse cloudgenius's
-  # home and .hermes dirs. Root-owns .hermes dirs so hermes CLI's
-  # _secure_dir(os.chmod 0o700) fails with EPERM and is silently ignored.
-  # Both cloudgenius and hermes access via users group (770).
-  system.activationScripts.hermes-home-perms = {
-    deps = ["users" "groups"];
-    text = ''
-      chmod 750 /home/cloudgenius
-      chown root:users /home/cloudgenius/.hermes
-      chmod 770 /home/cloudgenius/.hermes
-      chown root:users /home/cloudgenius/.hermes/cron
-      chmod 770 /home/cloudgenius/.hermes/cron
-      chown root:users /home/cloudgenius/.hermes/cron/output 2>/dev/null || true
-      chmod 770 /home/cloudgenius/.hermes/cron/output 2>/dev/null || true
-    '';
-  };
-
-  # Ensure secrets.env is merged into the hermes runtime .env on every
-  # service start — not only at nixos-rebuild activation time.
-  systemd.services.hermes-agent.serviceConfig.ExecStartPre = let
-    mergeScript = pkgs.writeShellScript "merge-hermes-env" ''
-      set -euo pipefail
-      ENV_FILE="/var/lib/hermes/.hermes/.env"
-      SRC="/etc/hermes-agent/secrets.env"
-      if [ -f "$SRC" ]; then
-        install -m 0600 -o hermes -g hermes /dev/null "$ENV_FILE"
-        cat "$SRC" >> "$ENV_FILE"
-      fi
-    '';
-  in ["${mergeScript}"];
-
-  # Add hermes user to users group so it can read cloudgenius's .hermes directory
-  # This allows the gateway to access cron jobs in /home/cloudgenius/.hermes/cron/
-  users.extraUsers.hermes.extraGroups = ["users"];
-
-  # Symlink gateway's cron dir to cloudgenius CLI's copy so both share one
-  # jobs.json. tmpfiles 'L+' removes any existing dir/file before linking.
-  systemd.tmpfiles.rules = [
-    "L+ /var/lib/hermes/.hermes/cron - - - - /home/cloudgenius/.hermes/cron"
-  ];
-
-  # Watch jobs.json for changes and fix permissions immediately.
-  # hermes CLI save_jobs() uses mkstemp+rename which creates files as 600.
-  # This inotify-based watcher triggers within milliseconds — no polling.
-  systemd.paths.hermes-cron-perms = {
-    wantedBy = ["paths.target"];
-    pathConfig.PathChanged = "/home/cloudgenius/.hermes/cron/jobs.json";
-  };
-  systemd.services.hermes-cron-perms = {
+  # QMD auto-index: re-index Brain vault every 5 minutes
+  systemd.services.qmd-update = {
+    description = "Re-index QMD Brain vault";
     serviceConfig = {
       Type = "oneshot";
-      ExecStart = "${pkgs.coreutils}/bin/chmod 640 /home/cloudgenius/.hermes/cron/jobs.json";
+      User = "cloudgenius";
+      ExecStart = pkgs.writeShellScript "qmd-update" ''
+        export PATH="${pkgs.nodejs_22}/bin:$PATH"
+        QMD="$HOME/.local/share/qmd/node_modules/.bin/qmd"
+        [ -x "$QMD" ] && $QMD update && $QMD embed --max-batch-mb 50
+      '';
     };
   };
+  systemd.timers.qmd-update = {
+    description = "QMD Brain vault re-index timer";
+    wantedBy = ["timers.target"];
+    timerConfig = {
+      OnBootSec = "2min";
+      OnUnitActiveSec = "5min";
+    };
+  };
+
+  # agenix CLI for editing encrypted secrets
+  environment.systemPackages = [inputs.agenix.packages.${pkgs.system}.default qmd-wrapper];
+
+  # CLI config.yaml is a symlink to a nix-generated file in the store.
+  # Updates automatically on rebuild (e.g. after switch-model). Read-only by design
+  # since config is nix-managed; hermes will log a harmless write error on exit.
+  systemd.tmpfiles.rules = [
+    "L+ /home/cloudgenius/.hermes/config.yaml - - - - ${cliConfigFile}"
+    "L+ /home/cloudgenius/.hermes/.env - - - - /run/agenix/hermes-env"
+  ];
 }

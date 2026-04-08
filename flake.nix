@@ -15,6 +15,11 @@
       url = "github:NousResearch/hermes-agent";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+
+    agenix = {
+      url = "github:ryantm/agenix";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
   };
 
   outputs = {
@@ -23,6 +28,7 @@
     home-manager,
     hyprland,
     hermes-agent,
+    agenix,
     ...
   } @ inputs: let
     system = "x86_64-linux";
@@ -66,6 +72,7 @@
         modules = [
           ./hosts/asus.nix
           home-manager.nixosModules.home-manager
+          agenix.nixosModules.default
           {
             home-manager.useGlobalPkgs = true;
             home-manager.useUserPackages = true;
@@ -74,7 +81,7 @@
           }
         ];
         specialArgs = {
-          inherit hyprland inputs;
+          inherit hyprland agenix inputs;
         };
       };
       venus = nixpkgs.lib.nixosSystem {
