@@ -46,6 +46,13 @@
       base_url = "http://localhost:8001/v1";
       context_length = 131072;
     };
+    auxiliary.vision = {
+      provider = "custom";
+      model = "qwen2.5-vl-7b";
+      base_url = "http://nuc:8001/v1";
+      api_key = "sk-no-key-required";
+      timeout = 300;
+    };
     terminal.backend = "local";
     memory = {
       memory_enabled = true;

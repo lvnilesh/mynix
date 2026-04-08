@@ -207,14 +207,46 @@ switch_model() {
     # 4. Update openclaw on m1
 
     # 4a. Update hermes vision provider
+
+    # 4b. Write hermes vision env for CLI usage
+    #     The gateway gets these via systemd environment, but the CLI needs them too.
+    HERMES_ENV_DIR="$HOME/.hermes"
+    mkdir -p "$HERMES_ENV_DIR"
+    if [[ "${MODEL_INPUT[$target]}" == *"image"* ]]; then
+        cat > "$HERMES_ENV_DIR/vision.env" << VEOF
+export AUXILIARY_VISION_PROVIDER=custom
+export AUXILIARY_VISION_MODEL=${MODEL_ID[$target]}
+export AUXILIARY_VISION_BASE_URL=http://localhost:8001/v1
+export AUXILIARY_VISION_API_KEY=sk-no-key-required
+export AUXILIARY_VISION_TIMEOUT=300
+VEOF
+    else
+        cat > "$HERMES_ENV_DIR/vision.env" << VEOF
+export AUXILIARY_VISION_PROVIDER=custom
+export AUXILIARY_VISION_MODEL=qwen2.5-vl-7b
+export AUXILIARY_VISION_BASE_URL=http://nuc:8001/v1
+export AUXILIARY_VISION_API_KEY=sk-no-key-required
+export AUXILIARY_VISION_TIMEOUT=300
+VEOF
+    fi
     #     If target model has vision, use it directly (localhost).
     #     If text-only, fall back to nuc vision model.
     if [[ "${MODEL_INPUT[$target]}" == *"image"* ]]; then
         echo "  Vision: using $target (localhost:8001)"
+        # Update auxiliary.vision in sharedSettings (used by CLI config.yaml)
+        sed -i '/auxiliary.vision = {/,/};/{
+            s|model = ".*";|model = "'"${MODEL_ID[$target]}"'";|
+            s|base_url = ".*";|base_url = "http://localhost:8001/v1";|
+        }' "$HERMES"
         sed -i "s|AUXILIARY_VISION_MODEL = \".*\"|AUXILIARY_VISION_MODEL = \"${MODEL_ID[$target]}\"|" "$HERMES"
         sed -i 's|AUXILIARY_VISION_BASE_URL = ".*"|AUXILIARY_VISION_BASE_URL = "http://localhost:8001/v1"|' "$HERMES"
     else
         echo "  Vision: using nuc (Qwen 2.5 VL 7B)"
+        # Update auxiliary.vision in sharedSettings (used by CLI config.yaml)
+        sed -i '/auxiliary.vision = {/,/};/{
+            s|model = ".*";|model = "qwen2.5-vl-7b";|
+            s|base_url = ".*";|base_url = "http://nuc:8001/v1";|
+        }' "$HERMES"
         sed -i 's|AUXILIARY_VISION_MODEL = ".*"|AUXILIARY_VISION_MODEL = "qwen2.5-vl-7b"|' "$HERMES"
         sed -i 's|AUXILIARY_VISION_BASE_URL = ".*"|AUXILIARY_VISION_BASE_URL = "http://nuc:8001/v1"|' "$HERMES"
     fi

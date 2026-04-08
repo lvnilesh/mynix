@@ -388,6 +388,9 @@
       bind '"\e[A": history-search-backward'
       bind '"\e[B": history-search-forward'
 
+      # Hermes vision env (written by switch-model, sets AUXILIARY_VISION_* for CLI)
+      [ -f "$HOME/.hermes/vision.env" ] && source "$HOME/.hermes/vision.env"
+
       # Kitty SSH kitten only inside Kitty; plain ssh elsewhere (Foot etc.)
       [[ "$TERM" == "xterm-kitty" ]] && alias ssh='kitten ssh'
     '';
