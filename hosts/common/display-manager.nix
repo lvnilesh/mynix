@@ -44,9 +44,9 @@
   # NVIDIA-specific vars (__GLX_VENDOR_LIBRARY_NAME, LIBVA_DRIVER_NAME, WLR_NO_HARDWARE_CURSORS)
   # live in nvidia.nix so they are only applied on NVIDIA hosts.
   environment.variables = {
-    XCURSOR_THEME = "Bibata-Modern-Ice";
-    XCURSOR_SIZE = "60";
-    HYPRCURSOR_THEME = "Bibata-Modern-Ice";
+    XCURSOR_THEME = "macOS";
+    XCURSOR_SIZE = "36";
+    HYPRCURSOR_THEME = "macOS";
     HYPRCURSOR_SIZE = "60";
     GDK_BACKEND = "wayland";
     QT_QPA_PLATFORM = "wayland";

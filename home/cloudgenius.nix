@@ -21,39 +21,36 @@
   home.pointerCursor = {
     gtk.enable = true;
     x11.enable = true;
-    package = pkgs.bibata-cursors; # ensures theme is installed
-    name = "Bibata-Modern-Ice";
-    size = 60; # reduced from 96 to balance Wayland/XWayland appearance
+    package = pkgs.apple-cursor;
+    name = "macOS";
+    size = 36;
   };
 
   # System-wide dark theme (Nord) for GTK + Qt
   gtk = {
     enable = true;
     theme = {
-      name = "Nordic-darker";
-      package = pkgs.nordic;
+      name = "adw-gtk3-dark";
+      package = pkgs.adw-gtk3;
     };
     iconTheme = {
-      name = "Papirus-Dark";
-      package = pkgs.papirus-icon-theme;
+      name = "WhiteSur-dark";
+      package = pkgs.whitesur-icon-theme;
     };
   };
 
-  # Qt theming via Kvantum (Nordic Kvantum theme is bundled in the nordic package)
+  # Qt theming via Kvantum
   qt = {
     enable = true;
     platformTheme.name = "kvantum";
     style.name = "kvantum";
   };
 
-  # Kvantum config: use the Nordic-Darker Kvantum theme
-
   xdg.configFile."Kvantum/kvantum.kvconfig".text = ''
     [General]
-    theme=Nordic-Darker
+    theme=KvAdapta
   '';
-  # Symlink the Nordic Kvantum theme from the nordic package
-  xdg.configFile."Kvantum/Nordic-Darker".source = "${pkgs.nordic}/share/Kvantum/Nordic-Darker";
+  # Kvantum theme config
 
   # Solaar config for Logitech Bolt receiver (paired devices below).
   # Solaar persists device settings here; Home Manager owns this file.
@@ -149,7 +146,7 @@
           --add-flags "--force-dark-mode"
       '';
     })
-    papirus-icon-theme
+    whitesur-icon-theme
     resilio-sync
     yt-dlp
     # claude-code # — managed via npm; nixpkgs 2.1.88 was yanked from registry
@@ -482,16 +479,16 @@
     videos = "$HOME/Videos";
   };
 
-  # Enforce Nordic dark for GTK apps
+  # Enforce dark theme for GTK apps
   home.sessionVariables = {
-    GTK_THEME = "Nordic-darker";
+    GTK_THEME = "adw-gtk3-dark";
   };
 
   # dconf: tell GNOME/libadwaita to prefer dark color scheme
   dconf.settings = {
     "org/gnome/desktop/interface" = {
       color-scheme = "prefer-dark";
-      gtk-theme = "Nordic-darker";
+      gtk-theme = "adw-gtk3-dark";
       text-scaling-factor = 1.5;
       font-name = "SF Pro Display 12";
     };

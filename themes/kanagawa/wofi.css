@@ -1,8 +1,8 @@
 * { color: #DCD7BA; }
-window { background: rgba(31, 31, 40, 0.95); border: 2px solid #7E9CD8; }
-#input { background: #16161D; border: 1px solid #727169; color: #DCD7BA; caret-color: #7E9CD8; }
-#input:focus { border: 1px solid #7E9CD8; }
-#entry:selected { background: #16161D; border-left: 2px solid #7E9CD8; }
+window { background: rgba(31, 31, 40, 0.95); box-shadow: 0 8px 32px rgba(0,0,0,0.35); border: none; }
+#input { background: #16161D; border: none; color: #DCD7BA; caret-color: #7E9CD8; }
+#input:focus { border: none; }
+#entry:selected { background: #16161D; border-left: none; }
 #entry:selected * { color: #7FB4CA; }
 #entry:hover:not(:selected) { background: rgba(22, 22, 29, 0.5); }
 #prompt { color: #7E9CD8; }

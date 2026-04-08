@@ -3,7 +3,7 @@
 # Uses state file instead of hyprctl getoption to avoid Hyprland segfault
 STATE_FILE="/tmp/hypr-gaps-zero"
 if [ -f "$STATE_FILE" ]; then
-    hyprctl --batch "keyword general:gaps_out 10; keyword general:gaps_in 5; keyword general:border_size 2"
+    hyprctl --batch "keyword general:gaps_out 12; keyword general:gaps_in 6; keyword general:border_size 0"
     rm "$STATE_FILE"
 else
     hyprctl --batch "keyword general:gaps_out 0; keyword general:gaps_in 0; keyword general:border_size 0"

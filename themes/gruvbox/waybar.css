@@ -1,7 +1,7 @@
-window#waybar { background: #282828; color: #EBDBB2; border-bottom: 2px solid #458588; }
-#workspaces button { color: #EBDBB2; border-bottom: 2px solid transparent; }
-#workspaces button.active { color: #83A598; border-bottom: 2px solid #458588; }
-#workspaces button.urgent { color: #CC241D; border-bottom: 2px solid #CC241D; }
+window#waybar { background: #282828; color: #EBDBB2; box-shadow: 0 1px 4px rgba(0,0,0,0.15); }
+#workspaces button { color: #EBDBB2; box-shadow: 0 1px 4px rgba(0,0,0,0.15); }
+#workspaces button.active { color: #83A598; box-shadow: 0 1px 4px rgba(0,0,0,0.15); }
+#workspaces button.urgent { color: #CC241D; box-shadow: 0 1px 4px rgba(0,0,0,0.15); }
 #window { color: #928374; }
 #clock { color: #EBDBB2; }
 #cpu { color: #83A598; }
@@ -19,5 +19,5 @@ window#waybar { background: #282828; color: #EBDBB2; border-bottom: 2px solid #4
 #custom-caffeine.caffeine-off { color: #928374; }
 #custom-expand-icon { color: #928374; }
 .tray-item { background: #282828; }
-tooltip { background: #282828; border: 1px solid #928374; color: #EBDBB2; }
+tooltip { background: #282828; border: none; box-shadow: 0 2px 8px rgba(0,0,0,0.25); color: #EBDBB2; }
 tooltip label { color: #EBDBB2; }

@@ -65,8 +65,8 @@ default-timeout=5000
 width=420
 outer-margin=10
 padding=10,15
-border-size=2
-border-radius=14
+border-size=0
+border-radius=12
 max-icon-size=32
 font=SF Pro Display 12
 text-color=${FG}
@@ -77,17 +77,17 @@ EOF
 # ── Generate SwayOSD theme ──
 cat > "$HOME/.config/swayosd/style.css" << EOF
 window {
-  border-radius: 14px;
+  border-radius: 12px;
   opacity: 0.97;
-  border: 2px solid ${FG};
+  border: none;
   background-color: ${BG};
   color: ${FG};
 }
 label { font-family: 'SF Pro Display'; font-size: 11pt; }
-progressbar { border-radius: 14px; }
+progressbar { border-radius: 12px; }
 progressbar:disabled trough { min-height: 6px; }
 progressbar trough { min-height: 6px; background-color: alpha(${FG}, 0.2); }
-progressbar trough highlight { background-color: ${ACCENT}; border-radius: 14px; }
+progressbar trough highlight { background-color: ${ACCENT}; border-radius: 12px; }
 image { padding: 6px; -gtk-icon-style: symbolic; color: ${FG}; }
 EOF
 
@@ -209,13 +209,13 @@ EOF
 cat > "$HOME/.config/walker/theme.css" << EOF
 * { font-family: 'SF Pro Display'; font-size: 16px; color: ${FG}; }
 .activation-label { font-size: 0px; }
-#box { background: alpha(${BG}, 0.95); padding: 20px; border: 2px solid ${ACCENT}; }
-#search { background: ${BG}; padding: 10px; border-bottom: 1px solid ${COLOR8}; }
+#box { border-radius: 12px; background: alpha(${BG}, 0.95); padding: 20px; border: none; box-shadow: 0 8px 32px rgba(0,0,0,0.35); }
+#search { background: ${BG}; padding: 10px; border-bottom: none; }
 #input { background: transparent; border: none; color: ${FG}; font-size: 18px; }
 #spinner { color: ${ACCENT}; }
 #list { margin-top: 8px; }
 .item { padding: 8px 14px; }
-.item:selected { background: ${HDR}; border-left: 2px solid ${ACCENT}; }
+.item:selected { background: ${HDR}; border-left: none; }
 .item:selected label { color: ${ACCENT}; }
 .item:hover:not(:selected) { background: alpha(${HDR}, 0.5); }
 .item label { color: ${FG}; }

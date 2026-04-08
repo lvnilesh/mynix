@@ -1,8 +1,8 @@
 * { color: #CDD6F4; }
-window { background: rgba(30, 30, 46, 0.95); border: 2px solid #89B4FA; }
-#input { background: #45475A; border: 1px solid #585B70; color: #CDD6F4; caret-color: #89B4FA; }
-#input:focus { border: 1px solid #89B4FA; }
-#entry:selected { background: #45475A; border-left: 2px solid #89B4FA; }
+window { background: rgba(30, 30, 46, 0.95); box-shadow: 0 8px 32px rgba(0,0,0,0.35); border: none; }
+#input { background: #45475A; border: none; color: #CDD6F4; caret-color: #89B4FA; }
+#input:focus { border: none; }
+#entry:selected { background: #45475A; border-left: none; }
 #entry:selected * { color: #94E2D5; }
 #entry:hover:not(:selected) { background: rgba(69, 71, 90, 0.5); }
 #prompt { color: #89B4FA; }
