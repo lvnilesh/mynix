@@ -17,6 +17,7 @@
     # "nvidia" VA-API is broken for browser use; Intel iHD is excellent.
     LIBVA_DRIVER_NAME = "iHD";
     WLR_NO_HARDWARE_CURSORS = "1";
+    LD_LIBRARY_PATH = "/run/opengl-driver/lib";
   };
 
   hardware.graphics = {
