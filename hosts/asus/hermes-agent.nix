@@ -41,10 +41,10 @@
   # Settings shared by both the gateway service and the interactive CLI.
   sharedSettings = {
     model = {
-      default = "unsloth/gemma-4-31B";
+      default = "kai-os/Carnice-27b";
       provider = "custom";
       base_url = "http://localhost:8001/v1";
-      context_length = 122880;
+      context_length = 131072;
     };
     terminal.backend = "local";
     memory = {
@@ -118,13 +118,13 @@ in {
 
   # Ensure gateway starts after model backend and memory layer are ready
   systemd.services.hermes-agent = {
-    after = ["gemma431.service" "honcho.service"];
-    wants = ["gemma431.service" "honcho.service"];
+    after = ["carnice27.service" "honcho.service"];
+    wants = ["carnice27.service" "honcho.service"];
     environment = {
       TELEGRAM_ALLOWED_USERS = "6366923819";
       AUXILIARY_VISION_PROVIDER = "custom";
-      AUXILIARY_VISION_MODEL = "unsloth/gemma-4-31B";
-      AUXILIARY_VISION_BASE_URL = "http://localhost:8001/v1";
+      AUXILIARY_VISION_MODEL = "qwen2.5-vl-7b";
+      AUXILIARY_VISION_BASE_URL = "http://nuc:8001/v1";
       AUXILIARY_VISION_API_KEY = "sk-no-key-required";
       AUXILIARY_VISION_TIMEOUT = "300";
     };

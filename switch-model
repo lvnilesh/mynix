@@ -8,7 +8,7 @@ HERMES="$NIXDIR/hosts/asus/hermes-agent.nix"
 OPENCLAW_HOST="stacey@m1"
 OPENCLAW_JSON="/Users/stacey/.openclaw/openclaw.json"
 
-MODELS=(qwen27 qwen35 gemma431)
+MODELS=(qwen27 qwen35 gemma431 carnice27)
 
 # ── Model metadata ────────────────────────────────────────────────────────────
 # Format: MODEL_ID (as reported by llama-server --alias)
@@ -32,6 +32,11 @@ MODEL_ID[gemma431]="unsloth/gemma-4-31B"
 MODEL_NAME[gemma431]="Gemma 4 31B (ASUS)"
 MODEL_CTX[gemma431]=122880
 MODEL_INPUT[gemma431]="text,image"
+
+MODEL_ID[carnice27]="kai-os/Carnice-27b"
+MODEL_NAME[carnice27]="Carnice 27B (ASUS)"
+MODEL_CTX[carnice27]=131072
+MODEL_INPUT[carnice27]="text"
 
 # ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -200,6 +205,19 @@ switch_model() {
 
 
     # 4. Update openclaw on m1
+
+    # 4a. Update hermes vision provider
+    #     If target model has vision, use it directly (localhost).
+    #     If text-only, fall back to nuc vision model.
+    if [[ "${MODEL_INPUT[$target]}" == *"image"* ]]; then
+        echo "  Vision: using $target (localhost:8001)"
+        sed -i "s|AUXILIARY_VISION_MODEL = \".*\"|AUXILIARY_VISION_MODEL = \"${MODEL_ID[$target]}\"|" "$HERMES"
+        sed -i 's|AUXILIARY_VISION_BASE_URL = ".*"|AUXILIARY_VISION_BASE_URL = "http://localhost:8001/v1"|' "$HERMES"
+    else
+        echo "  Vision: using nuc (Qwen 2.5 VL 7B)"
+        sed -i 's|AUXILIARY_VISION_MODEL = ".*"|AUXILIARY_VISION_MODEL = "qwen2.5-vl-7b"|' "$HERMES"
+        sed -i 's|AUXILIARY_VISION_BASE_URL = ".*"|AUXILIARY_VISION_BASE_URL = "http://nuc:8001/v1"|' "$HERMES"
+    fi
     update_openclaw "$target"
     echo ""
 

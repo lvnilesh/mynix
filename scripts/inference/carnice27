@@ -1,0 +1,30 @@
+#!/run/current-system/sw/bin/bash
+set -euo pipefail
+export CUDA_VISIBLE_DEVICES=0
+
+MODEL_PATH="${MODEL_PATH:-/home/cloudgenius/inference/models/carnice27/Carnice-27b-Q4_K_M.gguf}"
+MODEL_ALIAS="${MODEL_ALIAS:-kai-os/Carnice-27b}"
+
+if [[ ! -f "$MODEL_PATH" ]]; then
+    echo "Error: GGUF model file not found: $MODEL_PATH" >&2
+    exit 1
+fi
+
+/home/cloudgenius/inference/llama.cpp/build/bin/llama-server \
+    --model "$MODEL_PATH" \
+    --alias "$MODEL_ALIAS" \
+    --temp 1.0 \
+    --top-p 0.95 \
+    --min-p 0.01 \
+    --host 0.0.0.0 \
+    --port 8001 \
+    --kv-unified \
+    --cache-type-k q8_0 --cache-type-v q8_0 \
+    --flash-attn on \
+    --n-gpu-layers 99 \
+    --parallel 1 \
+    --batch-size 2048 --ubatch-size 512 \
+    --jinja \
+    --swa-full \
+    --reasoning off \
+    --ctx-size 131072
