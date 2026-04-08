@@ -165,6 +165,14 @@ in {
   # CLI config.yaml is a symlink to a nix-generated file in the store.
   # Updates automatically on rebuild (e.g. after switch-model). Read-only by design
   # since config is nix-managed; hermes will log a harmless write error on exit.
+  # Bridge: hermes-agent NixOS module expects "setupSecrets" activation script
+  # (old agenix naming). Current agenix uses "agenixNewGeneration". Provide an
+  # alias so the dependency resolves.
+  system.activationScripts.setupSecrets = {
+    text = ""; # no-op — agenix handles secrets via its own scripts
+    deps = ["agenixNewGeneration"];
+  };
+
   systemd.tmpfiles.rules = [
     "L+ /home/cloudgenius/.hermes/config.yaml - - - - ${cliConfigFile}"
     "L+ /home/cloudgenius/.hermes/.env - - - - /run/agenix/hermes-env"

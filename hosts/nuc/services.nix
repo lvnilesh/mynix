@@ -12,7 +12,7 @@
   homeDir = "/home/${user}";
   inferenceDir = "${homeDir}/inference";
   scriptsDir = ../../scripts/inference;
-  cudaLibs = "${pkgs.cudaPackages.cudatoolkit}/lib:${pkgs.cudaPackages.cuda_cudart}/lib:${pkgs.linuxPackages.nvidia_x11}/lib";
+  cudaLibs = "${pkgs.cudaPackages.cudatoolkit}/lib:${pkgs.cudaPackages.cuda_cudart}/lib:${config.hardware.nvidia.package}/lib";
 in {
   # Qwen2.5-VL 7B — multimodal VLM server on port 8001
   systemd.services.qwen25vl7b = {

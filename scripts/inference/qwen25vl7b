@@ -25,4 +25,4 @@ fi
     --ctx-size 16384 \
     --parallel 1 \
     --batch-size 2048 \
-    --ubatch-size 512
+    --ubatch-size 512 \
