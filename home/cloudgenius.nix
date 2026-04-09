@@ -23,7 +23,7 @@
     x11.enable = true;
     package = pkgs.apple-cursor;
     name = "macOS";
-    size = 36;
+    size = 64;
   };
 
   # System-wide dark theme (Nord) for GTK + Qt
