@@ -78,6 +78,7 @@
             home-manager.useUserPackages = true;
             home-manager.extraSpecialArgs = {inherit inputs;};
             home-manager.users.cloudgenius = import ./home/cloudgenius.nix;
+            home-manager.backupFileExtension = "hm-bak";
           }
         ];
         specialArgs = {
@@ -93,6 +94,7 @@
             home-manager.useUserPackages = true;
             home-manager.extraSpecialArgs = {inherit inputs;};
             home-manager.users.cloudgenius = import ./home/cloudgenius.nix;
+            home-manager.backupFileExtension = "hm-bak";
           }
         ];
         specialArgs = {
@@ -108,6 +110,7 @@
             home-manager.useUserPackages = true;
             home-manager.extraSpecialArgs = {inherit inputs;};
             home-manager.users.cloudgenius = import ./home/headless.nix;
+            home-manager.backupFileExtension = "hm-bak";
           }
         ];
       };

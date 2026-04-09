@@ -20,4 +20,5 @@ let
   admin = [cloudgenius];
 in {
   "secrets/hermes.env.age".publicKeys = admin ++ [asus];
+  "secrets/honcho.env.age".publicKeys = admin ++ [asus];
 }
