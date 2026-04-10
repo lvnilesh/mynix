@@ -515,6 +515,8 @@
           # colorTheme managed by theme-switch script
           # preferredDarkColorTheme managed by theme-switch script
           "workbench.startupEditor" = "none";
+          "github.copilot.chat.welcomeMessage" = "never";
+          "chat.startEntryPoint" = "none";
           "editor.fontFamily" = "SF Mono, monospace";
           "editor.fontSize" = 14;
           "editor.fontLigatures" = true;

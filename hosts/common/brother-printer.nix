@@ -23,6 +23,8 @@
     extraConf = ''
       # Optimize for laser printer performance
       MaxLogSize 0
+      # Disable colord color management integration (suppresses duplicate profile warnings)
+      ColorManagement Off
       LogLevel info
 
       # Security settings

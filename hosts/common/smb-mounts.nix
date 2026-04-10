@@ -70,7 +70,7 @@
     done
   '';
 in {
-  environment.systemPackages = [mountHelper pkgs.cifs-utils pkgs.samba];
+  environment.systemPackages = [mountHelper pkgs.cifs-utils pkgs.samba pkgs.wsdd];
 
   systemd.services.mount-smb-shares = {
     description = "Auto-mount SMB shares from local servers";

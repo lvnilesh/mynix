@@ -108,8 +108,8 @@ in {
   systemd.services.honcho = {
     description = "Honcho memory layer";
     wantedBy = ["multi-user.target"];
-    after = ["docker.service" "honcho-secrets.service"];
-    requires = ["docker.service" "honcho-secrets.service"];
+    after = ["docker.service"];
+    requires = ["docker.service"];
 
     serviceConfig = {
       Type = "oneshot";

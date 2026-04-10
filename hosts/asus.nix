@@ -6,7 +6,7 @@
   ...
 }: {
   # Set system architecture
-  nixpkgs.hostPlatform = "x86_64-linux";
+  # hostPlatform set in flake.nix
 
   imports = [
     (modulesPath + "/installer/scan/not-detected.nix")
@@ -44,7 +44,7 @@
     ./common/chatbot.nix
     ./common/document-tools.nix
     ./common/home-assistant.nix
-    ./common/promtail.nix
+    ./common/alloy.nix
     ./asus/honcho-secrets.nix
     ./asus/honcho.nix
     ./asus/md.nix

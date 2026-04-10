@@ -35,7 +35,7 @@
   # Enable Hyprland as an optional session in GDM
   programs.hyprland = {
     enable = true;
-    package = hyprland.packages.${pkgs.system}.default; # use only the flake input build
+    package = hyprland.packages.${pkgs.stdenv.hostPlatform.system}.default; # use only the flake input build
   };
 
   # Removed services.displayManager.sessionPackages = [ pkgs.hyprland ]; to avoid two Hyprland versions.

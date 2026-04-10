@@ -160,7 +160,7 @@ in {
   };
 
   # agenix CLI for editing encrypted secrets
-  environment.systemPackages = [inputs.agenix.packages.${pkgs.system}.default qmd-wrapper];
+  environment.systemPackages = [inputs.agenix.packages.${pkgs.stdenv.hostPlatform.system}.default qmd-wrapper];
 
   # CLI config.yaml is a symlink to a nix-generated file in the store.
   # Updates automatically on rebuild (e.g. after switch-model). Read-only by design

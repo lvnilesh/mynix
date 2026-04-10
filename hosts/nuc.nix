@@ -6,7 +6,7 @@
   modulesPath,
   ...
 }: {
-  nixpkgs.hostPlatform = "x86_64-linux";
+  # hostPlatform set in flake.nix
 
   imports = [
     (modulesPath + "/installer/scan/not-detected.nix")
