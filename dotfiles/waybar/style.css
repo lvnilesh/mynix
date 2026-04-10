@@ -1,6 +1,10 @@
 /*
  * Waybar — compact, macOS-inspired
  * Layout only; colors come from theme.css (managed by theme-switch)
+ *
+ * Font size: 19px ≈ 14pt at Dell U5226KW's ~128 DPI.
+ * Kitty, Foot, and VSCode all use 14pt; CSS px ≠ pt, so 19px keeps
+ * Waybar text visually consistent with the terminals.
  */
 
 /* Theme colors (written by theme-switch script) */
@@ -8,7 +12,7 @@
 
 * {
   font-family: "SF Pro Display", sans-serif;
-  font-size: 14px;
+  font-size: 19px;
   font-weight: 500;
   min-height: 0;
   border: none;
@@ -27,7 +31,7 @@
   margin: 0 3px;
   min-width: 16px;
   font-family: "SF Pro Display", sans-serif;
-  font-size: 14px;
+  font-size: 19px;
   font-weight: 600;
   transition: all 0.15s ease;
 }
@@ -45,7 +49,7 @@
 /* ── Center ── */
 
 #clock {
-  font-size: 14px;
+  font-size: 19px;
   font-weight: 500;
   padding: 0 20px;
 }

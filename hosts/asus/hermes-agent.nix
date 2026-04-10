@@ -54,6 +54,10 @@
       timeout = 300;
     };
     terminal.backend = "local";
+    gateway.telegram = {
+      enabled = true;
+      allowed_users = ["6366923819"];
+    };
     memory = {
       memory_enabled = true;
       user_profile_enabled = true;
@@ -127,14 +131,6 @@ in {
   systemd.services.hermes-agent = {
     after = ["carnice27.service" "honcho.service"];
     wants = ["carnice27.service" "honcho.service"];
-    environment = {
-      TELEGRAM_ALLOWED_USERS = "6366923819";
-      AUXILIARY_VISION_PROVIDER = "custom";
-      AUXILIARY_VISION_MODEL = "qwen2.5-vl-7b";
-      AUXILIARY_VISION_BASE_URL = "http://nuc:8001/v1";
-      AUXILIARY_VISION_API_KEY = "sk-no-key-required";
-      AUXILIARY_VISION_TIMEOUT = "300";
-    };
   };
 
   # QMD auto-index: re-index Brain vault every 5 minutes
