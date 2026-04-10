@@ -30,7 +30,7 @@ in {
     after = ["graphical-session.target"];
     wantedBy = ["graphical-session.target"];
 
-    path = [pkgs.ydotool];
+    path = [pkgs.ydotool pkgs.bash pkgs.coreutils];
     environment.YDOTOOL_SOCKET = "/run/ydotoold/socket";
     serviceConfig = {
       Type = "simple";

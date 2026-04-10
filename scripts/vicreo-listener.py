@@ -122,6 +122,8 @@ class VICREOHandler:
             return None
 
         msg_type = msg.get("type", "")
+        if not msg_type:
+            return None
         log.info("Command: %s", msg_type)
 
         try:
@@ -231,7 +233,7 @@ class VICREOHandler:
         text = msg.get("msg", "")
         if not text:
             return
-        self._run_ydotool(["type", "--", text])
+        self._run_ydotool(["type", "--key-delay", "10", "--", text])
 
     def _shell(self, msg: dict):
         shell_cmd = msg.get("shell", "")
