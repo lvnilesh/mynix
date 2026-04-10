@@ -18,6 +18,7 @@ import socket
 import subprocess
 import sys
 import threading
+import urllib.parse
 
 logging.basicConfig(
     level=logging.INFO,
@@ -122,7 +123,7 @@ class VICREOHandler:
             return None
 
         msg_type = msg.get("type", "")
-        if not msg_type:
+        if not msg_type or msg_type == "keepAlive":
             return None
         log.info("Command: %s", msg_type)
 
@@ -166,8 +167,6 @@ class VICREOHandler:
                     pass  # not needed for open-source listener
                 case "processOSX" | "setWindowToForeground":
                     log.info("Unsupported platform command: %s", msg_type)
-                case "keepAlive":
-                    pass
                 case _:
                     log.warning("Unknown command type: %s", msg_type)
         except Exception:
@@ -251,9 +250,11 @@ class VICREOHandler:
         path = msg.get("path", "")
         if not path:
             return
+        # Companion URL-encodes the path and may wrap it in quotes
+        path = urllib.parse.unquote(path).strip('"').strip("'")
         log.info("Open file: %s", path)
         subprocess.Popen(
-            ["xdg-open", path],
+            ["gio", "open", path],
             stdout=subprocess.DEVNULL,
             stderr=subprocess.DEVNULL,
         )

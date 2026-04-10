@@ -1,11 +1,42 @@
 #!/usr/bin/env bash
 # DDC brightness control — fast, cached, non-blocking
 # Usage: brightness [get|up|down|set VALUE]
+# Auto-detects the Dell monitor's I2C bus (survives bus renumbering)
 
-BUS=17
+MONITOR="DEL"
 STEP=5
 CACHE="/tmp/brightness-value"
+BUS_CACHE="/tmp/brightness-bus"
 LOCKFILE="/tmp/brightness-ddcutil.lock"
+
+get_bus() {
+    # Return cached bus if the device still exists
+    if [ -f "$BUS_CACHE" ]; then
+        local cached
+        cached=$(cat "$BUS_CACHE")
+        if [ -e "/dev/i2c-$cached" ]; then
+            echo "$cached"
+            return
+        fi
+    fi
+    # Detect bus by manufacturer ID
+    local bus
+    bus=$(ddcutil detect 2>/dev/null | awk -v mfg="$MONITOR" '
+        /I2C bus:/ { b = $NF; sub(/.*i2c-/, "", b) }
+        /Mfg id:/ && $0 ~ mfg { print b; exit }
+    ')
+    if [ -n "$bus" ]; then
+        echo "$bus" > "$BUS_CACHE"
+        echo "$bus"
+    fi
+}
+
+BUS=$(get_bus)
+if [ -z "$BUS" ]; then
+    # Monitor not found — return stale cache or default for waybar
+    [ "${1:-}" = "get" ] && { cat "$CACHE" 2>/dev/null || echo 50; exit 0; }
+    exit 1
+fi
 
 # Fast path: return cached value for waybar polling
 if [ "${1:-}" = "get" ]; then
@@ -13,7 +44,7 @@ if [ "${1:-}" = "get" ]; then
         cat "$CACHE"
     else
         # First run: seed cache (slow, but only once)
-        VAL=$(ddcutil --bus=$BUS --noverify getvcp 10 2>/dev/null | grep -oP 'current value = *\K[0-9]+' || echo 50)
+        VAL=$(ddcutil --bus="$BUS" --noverify getvcp 10 2>/dev/null | grep -oP 'current value = *\K[0-9]+' || echo 50)
         echo "$VAL" > "$CACHE"
         echo "$VAL"
     fi
@@ -51,4 +82,4 @@ echo "$NEW" > "$CACHE"
 echo "$NEW"
 
 # Apply to hardware in background (I2C is slow, don't block)
-( ddcutil --bus=$BUS --noverify setvcp 10 "$NEW" 2>/dev/null ) &
+( ddcutil --bus="$BUS" --noverify setvcp 10 "$NEW" 2>/dev/null ) &

@@ -381,6 +381,8 @@
   programs.bash = {
     enable = true;
     initExtra = ''
+      # Claude Code (npm global install)
+      export PATH="$HOME/.npm-global/bin:$PATH"
       # Autojump initialization for directory navigation with `j`
       [ -f "${pkgs.autojump}/share/autojump/autojump.sh" ] && . "${pkgs.autojump}/share/autojump/autojump.sh"
 

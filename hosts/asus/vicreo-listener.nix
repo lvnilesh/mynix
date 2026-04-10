@@ -30,8 +30,11 @@ in {
     after = ["graphical-session.target"];
     wantedBy = ["graphical-session.target"];
 
-    path = [pkgs.ydotool pkgs.bash pkgs.coreutils];
-    environment.YDOTOOL_SOCKET = "/run/ydotoold/socket";
+    path = [pkgs.ydotool pkgs.bash pkgs.coreutils pkgs.glib];
+    environment = {
+      YDOTOOL_SOCKET = "/run/ydotoold/socket";
+      XDG_CURRENT_DESKTOP = "Hyprland";
+    };
     serviceConfig = {
       Type = "simple";
       ExecStart = "${pkgs.python3}/bin/python3 ${listenerScript} --port 10001";
