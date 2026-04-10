@@ -11,3 +11,5 @@ result-*
 # OS generated files
 .DS_Store
 Thumbs.db
+*.pyc
+__pycache__/

@@ -48,6 +48,9 @@
     ./asus/honcho-secrets.nix
     ./asus/honcho.nix
     ./asus/md.nix
+    ./common/streamdeck.nix
+    ./asus/companion.nix
+    ./asus/vicreo-listener.nix
   ];
 
   # Disable runtime PM for Thunderbolt 4 USB controller (Maple Ridge)
@@ -114,6 +117,8 @@
       "dialout" # serial devices
       "uucp" # alternative serial device group on some distros
       "hermes" # read /etc/hermes-agent/secrets.env for CLI usage
+      "plugdev" # Stream Deck USB access
+      "ydotool" # ydotool input simulation
     ];
   };
 
