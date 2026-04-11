@@ -4,7 +4,8 @@
 
 * {
   font-family: "SF Pro Display", sans-serif;
-  font-size: 16px;
+  /* 19px ≈ 14pt at Dell U5226KW's ~128 DPI — matches Kitty/Foot/VSCode */
+  font-size: 19px;
   border: none;
   box-shadow: none;
 }

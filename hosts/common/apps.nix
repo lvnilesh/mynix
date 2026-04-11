@@ -267,7 +267,6 @@ in {
 
     # Conferencing
     zoomWayland
-    obsidian
     obsidianWayland
 
     # System call monitoring
