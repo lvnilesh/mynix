@@ -37,18 +37,20 @@
             condition: service_healthy
         restart: unless-stopped
 
-      deriver:
-        image: honcho:latest
-        command: python -m src.deriver
-        env_file: /etc/honcho/env
-        healthcheck:
-          disable: true
-        depends_on:
-          database:
-            condition: service_healthy
-          redis:
-            condition: service_healthy
-        restart: unless-stopped
+      # Deriver disabled — DERIVER_ENABLED=false in env, and container removed
+      # to avoid polling loop errors on empty DB. Re-add when deriver is needed.
+      # deriver:
+      #   image: honcho:latest
+      #   command: python -m src.deriver
+      #   env_file: /etc/honcho/env
+      #   healthcheck:
+      #     disable: true
+      #   depends_on:
+      #     database:
+      #       condition: service_healthy
+      #     redis:
+      #       condition: service_healthy
+      #   restart: unless-stopped
 
       database:
         image: pgvector/pgvector:pg15

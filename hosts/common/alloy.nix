@@ -6,7 +6,10 @@
 }: {
   services.alloy = {
     enable = true;
-    extraFlags = ["--stability.level=generally-available"];
+    extraFlags = [
+      "--stability.level=generally-available"
+      "--disable-reporting"
+    ];
   };
 
   # Alloy configuration file (River mode)
