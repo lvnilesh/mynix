@@ -21,4 +21,6 @@ let
 in {
   "secrets/hermes.env.age".publicKeys = admin ++ [asus];
   "secrets/honcho.env.age".publicKeys = admin ++ [asus];
+  "secrets/gog-keyring-password.age".publicKeys = admin ++ [asus];
+  "secrets/gog-credentials.age".publicKeys = admin ++ [asus];
 }

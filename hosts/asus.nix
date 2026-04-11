@@ -51,6 +51,7 @@
     ./common/streamdeck.nix
     ./asus/companion.nix
     ./asus/vicreo-listener.nix
+    ./asus/gog.nix
   ];
 
   # Disable runtime PM for Thunderbolt 4 USB controller (Maple Ridge)
