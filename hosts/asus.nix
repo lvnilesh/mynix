@@ -64,6 +64,9 @@
   # Shared nvidia.nix defaults to open=false for nuc's 1080 Ti (Pascal).
   hardware.nvidia.open = lib.mkForce true;
 
+  # Huion Kamvas 13 — kernel hid-uclogic driver + Hyprland device config.
+  # OTD not needed (v0.6.6.2 doesn't recognize PID 256c:006d).
+
   programs.nano.enable = false;
   environment.variables.EDITOR = "vim";
   environment.variables.VISUAL = "vim";

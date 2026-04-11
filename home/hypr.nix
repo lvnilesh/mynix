@@ -8,6 +8,10 @@
   home.file.".config/hypr/hyprland.conf".source = ../dotfiles/hyprland.conf;
   home.file.".config/hypr/hyprlock.conf".source = ../dotfiles/hyprlock.conf;
   home.file.".config/hypr/hypridle.conf".source = ../dotfiles/hypridle.conf;
+  home.file.".config/hypr/scripts/map-kamvas-pen.sh" = {
+    source = ../dotfiles/hypr/scripts/map-kamvas-pen.sh;
+    executable = true;
+  };
 
   home.file.".config/foot/foot.ini".source = ../dotfiles/foot/foot.ini;
 
